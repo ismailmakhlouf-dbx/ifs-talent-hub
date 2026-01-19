@@ -476,15 +476,32 @@ export default function CandidateDetail() {
                               </div>
                               <div className="flex items-center gap-2">
                                 <button
-                                  onClick={() => setWeights({ ...weights, [key]: Math.max(0, weights[key as keyof typeof weights] - 0.05) })}
-                                  className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
+                                  onClick={() => {
+                                    const newVal = Math.max(0, weights[key as keyof typeof weights] - 0.05)
+                                    setWeights({ ...weights, [key]: newVal })
+                                  }}
+                                  className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors font-bold"
                                 >
                                   −
                                 </button>
-                                <span className="w-14 text-center text-lg font-bold text-thomas-slate">{value.toFixed(0)}%</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={Math.round(value)}
+                                  onChange={(e) => {
+                                    const newVal = Math.max(0, Math.min(100, parseInt(e.target.value) || 0)) / 100
+                                    setWeights({ ...weights, [key]: newVal })
+                                  }}
+                                  className="w-16 text-center text-lg font-bold text-thomas-slate bg-slate-50 border border-slate-200 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-thomas-orange/50"
+                                />
+                                <span className="text-slate-400">%</span>
                                 <button
-                                  onClick={() => setWeights({ ...weights, [key]: Math.min(1, weights[key as keyof typeof weights] + 0.05) })}
-                                  className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
+                                  onClick={() => {
+                                    const newVal = Math.min(1, weights[key as keyof typeof weights] + 0.05)
+                                    setWeights({ ...weights, [key]: newVal })
+                                  }}
+                                  className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors font-bold"
                                 >
                                   +
                                 </button>
@@ -514,16 +531,32 @@ export default function CandidateDetail() {
                   })}
                 </div>
 
-                {/* Weight Warning */}
+                {/* Weight Warning and Normalize Button */}
                 {Math.abs(Object.values(weights).reduce((a, b) => a + b, 0) - 1) > 0.01 && (
-                  <div className="mt-6 p-4 bg-warning/5 border border-warning/20 rounded-xl flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg">⚠️</span>
+                  <div className="mt-6 p-4 bg-warning/5 border border-warning/20 rounded-xl flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-lg">⚠️</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-warning">Weights don't sum to 100%</p>
+                        <p className="text-sm text-slate-500">Current total: {(Object.values(weights).reduce((a, b) => a + b, 0) * 100).toFixed(0)}%</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-warning">Weights don't sum to 100%</p>
-                      <p className="text-sm text-slate-500">Adjust weights to total exactly 100% for accurate scoring</p>
-                    </div>
+                    <button
+                      onClick={() => {
+                        const total = Object.values(weights).reduce((a, b) => a + b, 0)
+                        if (total > 0) {
+                          const normalized = Object.fromEntries(
+                            Object.entries(weights).map(([k, v]) => [k, v / total])
+                          ) as typeof weights
+                          setWeights(normalized)
+                        }
+                      }}
+                      className="px-4 py-2 bg-warning text-white text-sm font-medium rounded-lg hover:bg-warning/90 transition-colors"
+                    >
+                      Normalize to 100%
+                    </button>
                   </div>
                 )}
               </div>

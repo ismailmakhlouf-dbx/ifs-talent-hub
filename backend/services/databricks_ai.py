@@ -197,19 +197,31 @@ class DatabricksAIService:
             try:
                 from databricks.sdk import WorkspaceClient
                 
+                host_url = f"https://{self.host}" if not self.host.startswith("http") else self.host
+                
                 # When running as Databricks App, use default auth (service principal)
                 if self.token:
+                    logger.info(f"Creating WorkspaceClient with token for {host_url}")
                     self._workspace_client = WorkspaceClient(
-                        host=f"https://{self.host}",
+                        host=host_url,
                         token=self.token
                     )
                 else:
                     # Use default authentication (works with Databricks Apps service principal)
-                    self._workspace_client = WorkspaceClient(host=f"https://{self.host}")
+                    logger.info(f"Creating WorkspaceClient with default auth for {host_url}")
+                    self._workspace_client = WorkspaceClient(host=host_url)
                 
-                logger.info("WorkspaceClient initialized successfully")
+                # Test the connection by listing endpoints (lightweight call)
+                try:
+                    endpoints = list(self._workspace_client.serving_endpoints.list())
+                    logger.info(f"WorkspaceClient initialized successfully, found {len(endpoints)} serving endpoints")
+                except Exception as test_err:
+                    logger.warning(f"WorkspaceClient created but test failed: {test_err}")
+                    
             except Exception as e:
                 logger.error(f"Failed to create WorkspaceClient: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
                 return None
         return self._workspace_client
     
@@ -246,37 +258,53 @@ class DatabricksAIService:
         return False
     
     def extract_cv_insights_sql(self, cv_text: str, candidate_name: str) -> Optional[Dict[str, Any]]:
-        """Extract CV insights using SQL AI functions"""
+        """Extract CV insights using Model Serving endpoint (faster than SQL AI functions)"""
         try:
-            conn = self.get_connection()
-            if not conn:
+            from databricks.sdk.service.serving import ChatMessage, ChatMessageRole
+            
+            w = self._get_workspace_client()
+            if not w:
+                logger.warning("No workspace client for CV extraction")
                 return None
             
-            cursor = conn.cursor()
+            prompt = f"""Extract professional insights from this CV for {candidate_name}. 
+Return a JSON object with these exact keys:
+- skills: array of technical skills
+- years_experience: number
+- education: array of objects with degree, field, institution
+- certifications: array of certification names
+- languages: array of languages
+- summary: 2-3 sentence professional summary
+
+CV Content:
+{cv_text[:4000]}
+
+Return ONLY valid JSON, no markdown or explanation."""
+
+            logger.info(f"Extracting CV insights for {candidate_name} via model serving")
             
-            # Use AI_QUERY function for CV extraction
-            query = f"""
-            SELECT AI_QUERY(
-                '{self.model_endpoint}',
-                'Extract professional insights from this CV for {candidate_name}. 
-                Return a JSON object with: skills (array), years_experience (number), 
-                education (array of objects with degree, field, institution), 
-                certifications (array), languages (array), 
-                summary (2-3 sentence professional summary).
-                
-                CV Content:
-                {cv_text[:3000]}
-                
-                Return ONLY valid JSON, no markdown.'
-            ) as insights
-            """
+            messages = [
+                ChatMessage(role=ChatMessageRole.USER, content=prompt)
+            ]
             
-            cursor.execute(query)
-            result = cursor.fetchone()
-            cursor.close()
+            response = w.serving_endpoints.query(
+                name=self.model_endpoint,
+                messages=messages,
+                max_tokens=800,
+            )
             
-            if result and result[0]:
-                return json.loads(result[0])
+            result_text = response.choices[0].message.content
+            logger.info(f"CV extraction response received: {len(result_text)} chars")
+            
+            # Try to parse JSON from the response
+            # Sometimes models wrap JSON in markdown code blocks
+            import re
+            json_match = re.search(r'\{[\s\S]*\}', result_text)
+            if json_match:
+                return json.loads(json_match.group())
+            
+            return json.loads(result_text)
+            
         except Exception as e:
             logger.warning(f"SQL CV extraction failed: {e}")
         
@@ -285,6 +313,8 @@ class DatabricksAIService:
     def ask_thom(self, question: str, context: Optional[str] = None) -> str:
         """Ask Thom a question using the model serving endpoint"""
         try:
+            from databricks.sdk.service.serving import ChatMessage, ChatMessageRole
+            
             w = self._get_workspace_client()
             if not w:
                 logger.warning("No workspace client available, using fallback")
@@ -296,12 +326,15 @@ class DatabricksAIService:
             
             logger.info(f"Calling model endpoint: {self.model_endpoint}")
             
+            # Use ChatMessage objects instead of plain dicts
+            messages = [
+                ChatMessage(role=ChatMessageRole.SYSTEM, content=system_prompt),
+                ChatMessage(role=ChatMessageRole.USER, content=question)
+            ]
+            
             response = w.serving_endpoints.query(
                 name=self.model_endpoint,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": question}
-                ],
+                messages=messages,
                 max_tokens=1000,
             )
             
