@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { X, Send, Sparkles, MessageCircle, Minimize2, Maximize2, Square } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -159,59 +159,109 @@ const IFS_KEYWORDS = [
   'FSM', 'Field Service Management'
 ]
 
-// Parse text and render with highlighted keywords
+// Parse markdown and render with highlighted keywords
 function HighlightedText({ text, thomasKeywords = [], ifsKeywords = [] }: { 
   text: string
   thomasKeywords?: string[]
   ifsKeywords?: string[]
 }) {
+  // First, parse markdown (bold, bullet points)
+  const parseMarkdown = (input: string): React.ReactNode[] => {
+    const lines = input.split('\n')
+    const result: React.ReactNode[] = []
+    
+    lines.forEach((line, lineIdx) => {
+      // Handle bullet points
+      let processedLine = line
+      let isBullet = false
+      if (line.trim().startsWith('* ') || line.trim().startsWith('- ')) {
+        isBullet = true
+        processedLine = line.replace(/^\s*[\*\-]\s*/, '')
+      }
+      
+      // Parse **bold** text
+      const boldPattern = /\*\*([^*]+)\*\*/g
+      const parts: React.ReactNode[] = []
+      let lastIndex = 0
+      let match
+      
+      while ((match = boldPattern.exec(processedLine)) !== null) {
+        // Add text before the bold
+        if (match.index > lastIndex) {
+          parts.push(processedLine.slice(lastIndex, match.index))
+        }
+        // Add bold text
+        parts.push(<strong key={`bold-${lineIdx}-${match.index}`}>{match[1]}</strong>)
+        lastIndex = match.index + match[0].length
+      }
+      // Add remaining text
+      if (lastIndex < processedLine.length) {
+        parts.push(processedLine.slice(lastIndex))
+      }
+      
+      if (isBullet) {
+        result.push(
+          <span key={`line-${lineIdx}`} className="block pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-thomas-orange">
+            {parts.length > 0 ? parts : processedLine}
+          </span>
+        )
+      } else {
+        result.push(...parts)
+        if (lineIdx < lines.length - 1) {
+          result.push('\n')
+        }
+      }
+    })
+    
+    return result
+  }
+  
   // Combine provided keywords with defaults
   const allThomasKw = [...new Set([...THOMAS_KEYWORDS, ...thomasKeywords])]
   const allIfsKw = [...new Set([...IFS_KEYWORDS, ...ifsKeywords])]
   
-  // Build a regex pattern for all keywords
-  const allKeywords = [
-    ...allThomasKw.map(k => ({ keyword: k, type: 'thomas' })),
-    ...allIfsKw.map(k => ({ keyword: k, type: 'ifs' }))
-  ].sort((a, b) => b.keyword.length - a.keyword.length) // Longest first
+  // Parse markdown first
+  const parsedContent = parseMarkdown(text)
   
-  if (allKeywords.length === 0) {
-    return <>{text}</>
+  // Now highlight keywords in string parts
+  const highlightKeywords = (content: React.ReactNode): React.ReactNode => {
+    if (typeof content !== 'string') return content
+    
+    const pattern = new RegExp(
+      `(${[...allThomasKw, ...allIfsKw].map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`,
+      'gi'
+    )
+    
+    const parts = content.split(pattern)
+    
+    return parts.map((part, i) => {
+      const lowerPart = part.toLowerCase()
+      
+      if (allThomasKw.some(k => k.toLowerCase() === lowerPart)) {
+        return (
+          <span key={i} className="text-thomas-orange font-semibold" title="Thomas International">
+            {part}
+          </span>
+        )
+      }
+      
+      if (allIfsKw.some(k => k.toLowerCase() === lowerPart)) {
+        return (
+          <span key={i} className="text-ifs-purple font-semibold" title="IFS Cloud">
+            {part}
+          </span>
+        )
+      }
+      
+      return <span key={i}>{part}</span>
+    })
   }
-  
-  // Create a combined pattern
-  const pattern = new RegExp(
-    `(${allKeywords.map(k => k.keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`,
-    'gi'
-  )
-  
-  const parts = text.split(pattern)
   
   return (
     <>
-      {parts.map((part, i) => {
-        const lowerPart = part.toLowerCase()
-        
-        // Check if this part matches a Thomas keyword
-        if (allThomasKw.some(k => k.toLowerCase() === lowerPart)) {
-          return (
-            <span key={i} className="text-thomas-orange font-semibold" title="Thomas International">
-              {part}
-            </span>
-          )
-        }
-        
-        // Check if this part matches an IFS keyword
-        if (allIfsKw.some(k => k.toLowerCase() === lowerPart)) {
-          return (
-            <span key={i} className="text-ifs-purple font-semibold" title="IFS Cloud">
-              {part}
-            </span>
-          )
-        }
-        
-        return <span key={i}>{part}</span>
-      })}
+      {parsedContent.map((node, i) => (
+        <React.Fragment key={i}>{highlightKeywords(node)}</React.Fragment>
+      ))}
     </>
   )
 }
@@ -243,11 +293,11 @@ function AskThomChat({ context, contextData, onClose }: AskThomChatProps) {
   const getContainerClasses = () => {
     switch (expansionMode) {
       case 'full':
-        return 'fixed inset-4 w-auto h-auto'
+        return 'fixed inset-4 w-auto h-auto max-h-[calc(100vh-32px)]'
       case 'half':
-        return 'fixed right-4 top-4 bottom-4 w-[50vw] max-w-[800px]'
+        return 'fixed right-4 bottom-4 w-[420px] h-[50vh] max-h-[500px]'
       default:
-        return isMinimized ? 'w-72' : 'w-[420px]'
+        return isMinimized ? 'w-72' : 'w-[380px] max-h-[50vh]'
     }
   }
 
@@ -255,11 +305,11 @@ function AskThomChat({ context, contextData, onClose }: AskThomChatProps) {
   const getMessagesHeight = () => {
     switch (expansionMode) {
       case 'full':
-        return 'h-[calc(100%-180px)]'
+        return 'max-h-[calc(100vh-250px)] overflow-y-auto'
       case 'half':
-        return 'h-[calc(100%-180px)]'
+        return 'max-h-[calc(50vh-180px)] overflow-y-auto'
       default:
-        return 'h-80'
+        return 'max-h-[250px] overflow-y-auto'
     }
   }
 

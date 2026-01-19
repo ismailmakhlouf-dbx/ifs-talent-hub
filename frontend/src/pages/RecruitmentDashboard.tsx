@@ -503,17 +503,17 @@ export default function RecruitmentDashboard({ managerId }: Props) {
             {/* Quick Stats */}
             <div className="flex items-center gap-6">
               <div className="text-right">
-                <p className="text-2xl font-bold text-thomas-slate">{stats?.total_open_roles}</p>
+                <p className="text-2xl font-bold text-thomas-slate">{roles.length}</p>
                 <p className="text-xs text-slate-500">Open Roles</p>
               </div>
               <div className="w-px h-10 bg-slate-200" />
               <div className="text-right">
-                <p className="text-2xl font-bold text-thomas-orange">{stats?.total_candidates}</p>
+                <p className="text-2xl font-bold text-thomas-orange">{candidates.length}</p>
                 <p className="text-xs text-slate-500">Candidates</p>
               </div>
               <div className="w-px h-10 bg-slate-200" />
               <div className="text-right">
-                <p className="text-2xl font-bold text-danger">{stats?.critical_roles}</p>
+                <p className="text-2xl font-bold text-danger">{roles.filter(r => r.priority === 'Critical').length}</p>
                 <p className="text-xs text-slate-500">Critical</p>
               </div>
             </div>
@@ -534,8 +534,8 @@ export default function RecruitmentDashboard({ managerId }: Props) {
             <div className="flex items-start justify-between mb-3">
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">📂 Open Roles</p>
             </div>
-            <p className="text-3xl font-display font-bold text-slate-800">{stats?.total_open_roles || 0}</p>
-            <p className="text-sm text-thomas-orange mt-1">↑ 2 from last week</p>
+            <p className="text-3xl font-display font-bold text-slate-800">{roles.length}</p>
+            <p className="text-sm text-thomas-orange mt-1">For your department</p>
           </button>
 
           <button
@@ -548,7 +548,7 @@ export default function RecruitmentDashboard({ managerId }: Props) {
             <div className="flex items-start justify-between mb-3">
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">🔴 Critical Priority</p>
             </div>
-            <p className="text-3xl font-display font-bold text-danger">{stats?.critical_roles || 0}</p>
+            <p className="text-3xl font-display font-bold text-danger">{roles.filter(r => r.priority === 'Critical').length}</p>
             <p className="text-sm text-danger mt-1">Need immediate attention</p>
           </button>
 
@@ -562,8 +562,8 @@ export default function RecruitmentDashboard({ managerId }: Props) {
             <div className="flex items-start justify-between mb-3">
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">👥 Active Candidates</p>
             </div>
-            <p className="text-3xl font-display font-bold text-thomas-slate">{stats?.total_candidates || 0}</p>
-            <p className="text-sm text-slate-500 mt-1">Across {stats?.total_open_roles || 0} roles</p>
+            <p className="text-3xl font-display font-bold text-thomas-slate">{candidates.length}</p>
+            <p className="text-sm text-slate-500 mt-1">Across {roles.length} roles</p>
           </button>
 
           <button
