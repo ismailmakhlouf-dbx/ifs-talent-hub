@@ -6,6 +6,7 @@ import PerformanceDashboard from './pages/PerformanceDashboard'
 import CandidateDetail from './pages/CandidateDetail'
 import EmployeeDetail from './pages/EmployeeDetail'
 import Referrals from './pages/Referrals'
+import UnderTheHood from './pages/UnderTheHood'
 
 function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -31,6 +32,7 @@ function App() {
             <Route path="/referrals" element={<Referrals />} />
             <Route path="/performance" element={<PerformanceDashboard managerId={selectedManager} />} />
             <Route path="/performance/employee/:employeeId" element={<EmployeeDetail />} />
+            <Route path="/under-the-hood" element={<UnderTheHood />} />
           </Routes>
         </main>
       </div>

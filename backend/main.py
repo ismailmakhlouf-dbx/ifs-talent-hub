@@ -14,7 +14,7 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.routers import recruitment, performance, analytics, ai_insights
+from backend.routers import recruitment, performance, analytics, ai_insights, system
 from config import is_local_mode
 
 # Check if we have a built frontend
@@ -67,6 +67,7 @@ app.include_router(recruitment.router, prefix="/api/recruitment", tags=["Recruit
 app.include_router(performance.router, prefix="/api/performance", tags=["Performance"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
 app.include_router(ai_insights.router, prefix="/api/ai", tags=["AI Insights"])
+app.include_router(system.router, prefix="/api/system", tags=["System"])
 
 
 @app.get("/api")

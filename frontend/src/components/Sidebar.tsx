@@ -10,7 +10,8 @@ import {
   User,
   Building2,
   Sparkles,
-  UserPlus
+  UserPlus,
+  Cpu
 } from 'lucide-react'
 import { performanceApi, Manager } from '../lib/api'
 import clsx from 'clsx'
@@ -51,6 +52,12 @@ export default function Sidebar({ collapsed, onToggle, selectedManager, onManage
       icon: BarChart3, 
       label: 'Performance', 
       description: 'Team metrics & morale'
+    },
+    { 
+      path: '/under-the-hood', 
+      icon: Cpu, 
+      label: 'Under the Hood', 
+      description: 'Databricks architecture'
     },
   ]
 
