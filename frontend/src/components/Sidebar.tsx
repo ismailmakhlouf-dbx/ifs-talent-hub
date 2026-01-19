@@ -245,31 +245,20 @@ export default function Sidebar({ collapsed, onToggle, selectedManager, onManage
         })}
       </nav>
 
-      {/* Footer Status */}
+      {/* Footer - Powered By */}
       <div className="p-4 border-t border-[#2A3142]">
-        <div className={clsx(
-          'flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#242937]',
-          collapsed && 'justify-center px-2'
-        )}>
-          <div className="relative">
-            <div className="w-2 h-2 rounded-full bg-emerald-500" />
-            <div className="absolute inset-0 w-2 h-2 rounded-full bg-emerald-500 animate-ping opacity-40" />
-          </div>
-          {!collapsed && (
-            <div className="flex-1">
-              <p className="text-xs text-[#D1D5DB] font-medium">Local Development</p>
-              <p className="text-[10px] text-[#6B7280]">Mock data active</p>
-            </div>
-          )}
-        </div>
-        
         {!collapsed && (
-          <div className="flex flex-col items-center gap-1 mt-3">
-            <div className="flex items-center gap-1.5 text-[#6B7280]">
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-1.5 text-[#9CA3AF]">
               <Sparkles className="w-3 h-3 text-thomas-orange" />
-              <span className="text-[10px]">Thomas Insights + Mosaic AI</span>
+              <span className="text-[10px] font-medium">Thomas Insights + Mosaic AI</span>
             </div>
-            <span className="text-[9px] text-[#4B5563]">IFS Cloud Integration</span>
+            <span className="text-[9px] text-[#6B7280]">IFS Cloud Integration</span>
+          </div>
+        )}
+        {collapsed && (
+          <div className="flex justify-center">
+            <Sparkles className="w-4 h-4 text-thomas-orange" />
           </div>
         )}
       </div>

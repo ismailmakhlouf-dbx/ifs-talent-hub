@@ -19,12 +19,16 @@ import {
 import clsx from 'clsx'
 
 interface SystemStatus {
+  is_databricks_app: boolean
   databricks_connected: boolean
   model_serving_available: boolean
+  model_serving_endpoints: string[]
   sql_warehouse_available: boolean
   sql_warehouse_warmed_up: boolean
+  lakebase_available: boolean
   model_endpoint: string
   host: string
+  environment: string
 }
 
 export default function UnderTheHood() {
@@ -65,97 +69,124 @@ export default function UnderTheHood() {
           </div>
         </div>
 
-        {/* Architecture Overview */}
-        <div className="grid grid-cols-3 gap-6 mb-8">
+        {/* Architecture Overview - 4 columns */}
+        <div className="grid grid-cols-4 gap-5 mb-8">
           {/* Databricks Apps */}
-          <div className="bg-white rounded-2xl shadow-card p-6 border border-slate-200">
+          <div className="bg-white rounded-2xl shadow-card p-5 border border-slate-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
                 <Cloud className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="font-display font-semibold text-thomas-slate">Databricks Apps</h3>
+                <h3 className="font-display font-semibold text-thomas-slate text-sm">Databricks Apps</h3>
                 <p className="text-xs text-slate-500">Application Hosting</p>
               </div>
             </div>
-            <ul className="space-y-2 text-sm text-slate-600">
+            <ul className="space-y-1.5 text-sm text-slate-600">
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-success" />
-                FastAPI Backend
+                <CheckCircle className="w-3.5 h-3.5 text-success" />
+                <span className="text-xs">FastAPI Backend</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-success" />
-                React Frontend (Vite)
+                <CheckCircle className="w-3.5 h-3.5 text-success" />
+                <span className="text-xs">React Frontend (Vite)</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-success" />
-                Service Principal Auth
+                <CheckCircle className="w-3.5 h-3.5 text-success" />
+                <span className="text-xs">Service Principal Auth</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-success" />
-                Auto-scaling Compute
+                <CheckCircle className="w-3.5 h-3.5 text-success" />
+                <span className="text-xs">Auto-scaling Compute</span>
               </li>
             </ul>
           </div>
 
           {/* Model Serving */}
-          <div className="bg-white rounded-2xl shadow-card p-6 border border-slate-200">
+          <div className="bg-white rounded-2xl shadow-card p-5 border border-slate-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="font-display font-semibold text-thomas-slate">Mosaic AI</h3>
+                <h3 className="font-display font-semibold text-thomas-slate text-sm">Mosaic AI</h3>
                 <p className="text-xs text-slate-500">Model Serving</p>
               </div>
             </div>
-            <ul className="space-y-2 text-sm text-slate-600">
+            <ul className="space-y-1.5 text-sm text-slate-600">
               <li className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-warning" />
-                <span className="font-mono text-xs">databricks-gemini-2-5-flash</span>
+                <Zap className="w-3.5 h-3.5 text-warning" />
+                <span className="font-mono text-[10px]">gemini-2-5-flash</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-success" />
-                AskThom Conversations
+                <CheckCircle className="w-3.5 h-3.5 text-success" />
+                <span className="text-xs">AskThom Chat</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-success" />
-                CV Insight Extraction
+                <CheckCircle className="w-3.5 h-3.5 text-success" />
+                <span className="text-xs">CV Extraction</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-success" />
-                Candidate Summaries
+                <CheckCircle className="w-3.5 h-3.5 text-success" />
+                <span className="text-xs">Candidate Summaries</span>
               </li>
             </ul>
           </div>
 
-          {/* SQL Warehouse / Lakebase */}
-          <div className="bg-white rounded-2xl shadow-card p-6 border border-slate-200">
+          {/* SQL Warehouse - for AI Functions */}
+          <div className="bg-white rounded-2xl shadow-card p-5 border border-slate-200">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                <Database className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
+                <Server className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="font-display font-semibold text-thomas-slate">Lakebase</h3>
-                <p className="text-xs text-slate-500">SQL Warehouse + Delta Tables</p>
+                <h3 className="font-display font-semibold text-thomas-slate text-sm">SQL Warehouse</h3>
+                <p className="text-xs text-slate-500">AI Functions</p>
               </div>
             </div>
-            <ul className="space-y-2 text-sm text-slate-600">
+            <ul className="space-y-1.5 text-sm text-slate-600">
               <li className="flex items-center gap-2">
-                <Database className="w-4 h-4 text-blue-500" />
-                <span className="font-mono text-xs">thomas-talenthub-dwh</span>
+                <Database className="w-3.5 h-3.5 text-cyan-500" />
+                <span className="font-mono text-[10px]">thomas-talenthub-dwh</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-success" />
-                Delta Lake Storage
+                <CheckCircle className="w-3.5 h-3.5 text-success" />
+                <span className="text-xs">AI_QUERY Function</span>
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-success" />
-                AI Functions (AI_QUERY)
+                <CheckCircle className="w-3.5 h-3.5 text-success" />
+                <span className="text-xs">AI_GENERATE</span>
               </li>
               <li className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-slate-400" />
-                Unity Catalog Governance
+                <CheckCircle className="w-3.5 h-3.5 text-success" />
+                <span className="text-xs">Serverless Compute</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Lakebase - Delta Lake Storage */}
+          <div className="bg-white rounded-2xl shadow-card p-5 border border-slate-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+                <Layers className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-display font-semibold text-thomas-slate text-sm">Lakebase</h3>
+                <p className="text-xs text-slate-500">Data Storage</p>
+              </div>
+            </div>
+            <ul className="space-y-1.5 text-sm text-slate-600">
+              <li className="flex items-center gap-2">
+                <Layers className="w-3.5 h-3.5 text-indigo-500" />
+                <span className="text-xs">Delta Lake Tables</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-3.5 h-3.5 text-success" />
+                <span className="text-xs">Unity Catalog</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Shield className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-xs">Column Masking</span>
               </li>
             </ul>
           </div>
@@ -174,31 +205,58 @@ export default function UnderTheHood() {
             </button>
           </div>
           
-          <div className="grid grid-cols-4 gap-4">
+          {/* Environment Banner */}
+          <div className={clsx(
+            "mb-4 px-4 py-2 rounded-xl flex items-center gap-3",
+            status?.is_databricks_app ? "bg-success/10 border border-success/20" : "bg-warning/10 border border-warning/20"
+          )}>
+            <div className={clsx(
+              "w-2 h-2 rounded-full",
+              status?.is_databricks_app ? "bg-success" : "bg-warning"
+            )} />
+            <span className="text-sm font-medium">
+              Environment: <span className={status?.is_databricks_app ? "text-success" : "text-warning"}>
+                {status?.environment || 'Checking...'}
+              </span>
+            </span>
+            {status?.host && (
+              <span className="text-xs text-slate-500 font-mono ml-auto">{status.host}</span>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-5 gap-3">
             <StatusCard 
-              label="Databricks Connection"
-              value={status?.databricks_connected ? 'Connected' : 'Disconnected'}
-              status={status?.databricks_connected ? 'success' : 'error'}
+              label="Databricks Apps"
+              value={status?.is_databricks_app ? 'Running' : 'Local'}
+              status={status?.is_databricks_app ? 'success' : 'warning'}
               icon={Cloud}
             />
             <StatusCard 
               label="Model Serving"
-              value={status?.model_serving_available ? 'Available' : 'Unavailable'}
+              value={status?.model_serving_available ? 'Available' : 'Checking...'}
               status={status?.model_serving_available ? 'success' : 'warning'}
               icon={Sparkles}
               detail={status?.model_endpoint}
             />
             <StatusCard 
               label="SQL Warehouse"
-              value={status?.sql_warehouse_available ? 'Available' : 'Unavailable'}
+              value={status?.sql_warehouse_available ? 'Connected' : 'Connecting...'}
               status={status?.sql_warehouse_available ? 'success' : 'warning'}
-              icon={Database}
+              icon={Server}
+              detail={status?.sql_warehouse_warmed_up ? 'Warmed up' : 'Cold start'}
             />
             <StatusCard 
-              label="Warehouse Warmed"
-              value={status?.sql_warehouse_warmed_up ? 'Warmed Up' : 'Cold'}
-              status={status?.sql_warehouse_warmed_up ? 'success' : 'warning'}
-              icon={Zap}
+              label="Lakebase"
+              value={status?.lakebase_available ? 'Available' : 'Checking...'}
+              status={status?.lakebase_available ? 'success' : 'warning'}
+              icon={Layers}
+              detail="Delta Lake + Unity Catalog"
+            />
+            <StatusCard 
+              label="SDK Connection"
+              value={status?.databricks_connected ? 'Connected' : 'Connecting...'}
+              status={status?.databricks_connected ? 'success' : 'warning'}
+              icon={GitBranch}
             />
           </div>
         </div>
@@ -207,58 +265,75 @@ export default function UnderTheHood() {
         <div className="bg-white rounded-2xl shadow-card p-6 border border-slate-200 mb-8">
           <h3 className="font-display font-semibold text-thomas-slate text-lg mb-6">Data Flow Architecture</h3>
           
-          <div className="flex items-center justify-between">
+          {/* Main Flow */}
+          <div className="flex items-center justify-center gap-4 mb-6">
             {/* Frontend */}
             <div className="flex flex-col items-center gap-2">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-100 to-blue-100 border-2 border-cyan-300 flex items-center justify-center">
-                <Code className="w-8 h-8 text-cyan-600" />
+              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 border-2 border-cyan-300 flex items-center justify-center">
+                <Code className="w-7 h-7 text-cyan-600" />
               </div>
-              <span className="text-sm font-medium text-slate-600">React Frontend</span>
-              <span className="text-xs text-slate-400">Vite + TypeScript</span>
+              <span className="text-xs font-medium text-slate-600">Frontend</span>
+              <span className="text-[10px] text-slate-400">React + Vite</span>
             </div>
 
-            <ArrowRight className="w-6 h-6 text-slate-300" />
+            <ArrowRight className="w-5 h-5 text-slate-300" />
 
             {/* Backend */}
             <div className="flex flex-col items-center gap-2">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-green-100 to-emerald-100 border-2 border-green-300 flex items-center justify-center">
-                <Server className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-100 to-emerald-100 border-2 border-green-300 flex items-center justify-center">
+                <Server className="w-7 h-7 text-green-600" />
               </div>
-              <span className="text-sm font-medium text-slate-600">FastAPI Backend</span>
-              <span className="text-xs text-slate-400">Python 3.11</span>
+              <span className="text-xs font-medium text-slate-600">Backend</span>
+              <span className="text-[10px] text-slate-400">FastAPI</span>
             </div>
 
-            <ArrowRight className="w-6 h-6 text-slate-300" />
+            <ArrowRight className="w-5 h-5 text-slate-300" />
 
             {/* Databricks SDK */}
             <div className="flex flex-col items-center gap-2">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-100 to-red-100 border-2 border-orange-300 flex items-center justify-center">
-                <Box className="w-8 h-8 text-orange-600" />
+              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-orange-100 to-red-100 border-2 border-orange-300 flex items-center justify-center">
+                <Box className="w-7 h-7 text-orange-600" />
               </div>
-              <span className="text-sm font-medium text-slate-600">Databricks SDK</span>
-              <span className="text-xs text-slate-400">databricks-sdk</span>
+              <span className="text-xs font-medium text-slate-600">SDK</span>
+              <span className="text-[10px] text-slate-400">databricks-sdk</span>
             </div>
 
-            <ArrowRight className="w-6 h-6 text-slate-300" />
+            <ArrowRight className="w-5 h-5 text-slate-300" />
 
-            {/* Model Serving */}
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-purple-300 flex items-center justify-center">
-                <Sparkles className="w-8 h-8 text-purple-600" />
+            {/* Split into branches */}
+            <div className="flex flex-col gap-4">
+              {/* Model Serving Branch */}
+              <div className="flex items-center gap-3 bg-purple-50 rounded-xl px-4 py-2 border border-purple-200">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-purple-700">Model Serving</span>
+                  <p className="text-[10px] text-purple-500">AskThom • CV Extraction</p>
+                </div>
               </div>
-              <span className="text-sm font-medium text-slate-600">Model Serving</span>
-              <span className="text-xs text-slate-400">Gemini 2.5 Flash</span>
+              
+              {/* SQL Warehouse Branch */}
+              <div className="flex items-center gap-3 bg-cyan-50 rounded-xl px-4 py-2 border border-cyan-200">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
+                  <Database className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-cyan-700">SQL Warehouse</span>
+                  <p className="text-[10px] text-cyan-500">AI_QUERY • Analytics</p>
+                </div>
+              </div>
             </div>
 
-            <ArrowRight className="w-6 h-6 text-slate-300" />
+            <ArrowRight className="w-5 h-5 text-slate-300" />
 
-            {/* Delta Lake */}
+            {/* Lakebase */}
             <div className="flex flex-col items-center gap-2">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 border-2 border-blue-300 flex items-center justify-center">
-                <Layers className="w-8 h-8 text-blue-600" />
+              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 border-2 border-blue-300 flex items-center justify-center">
+                <Layers className="w-7 h-7 text-blue-600" />
               </div>
-              <span className="text-sm font-medium text-slate-600">Delta Lake</span>
-              <span className="text-xs text-slate-400">Unity Catalog</span>
+              <span className="text-xs font-medium text-slate-600">Lakebase</span>
+              <span className="text-[10px] text-slate-400">Delta + Unity</span>
             </div>
           </div>
         </div>
