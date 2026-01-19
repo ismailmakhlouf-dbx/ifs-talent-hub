@@ -1,0 +1,30 @@
+# Databricks App Configuration
+# IFS Talent Hub - Powered by Thomas International
+
+name: thomas-talent-hub
+description: "IFS Talent Hub - Unified Talent Management powered by Thomas International psychometrics and Databricks AI"
+
+# App entrypoint
+command: ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Environment variables
+env:
+  - name: DATABRICKS_HOST
+    value: "fevm-ismailmakhlouf-demo-ws.cloud.databricks.com"
+  - name: DATABRICKS_WAREHOUSE_ID
+    value: "54da90976fc8c514"
+  - name: DATABRICKS_MODEL_ENDPOINT
+    value: "databricks-gemini-2-5-flash"
+  - name: APP_MODE
+    value: "local"
+  - name: USE_MOCK_DATA
+    value: "true"
+  - name: PYTHONPATH
+    value: "."
+  - name: LOG_LEVEL
+    value: "INFO"
+
+# Resources
+resources:
+  cpu: "2"
+  memory: "4Gi"

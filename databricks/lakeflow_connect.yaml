@@ -1,0 +1,301 @@
+# ============================================================
+# Lakeflow Connect Configuration
+# Ingestion pipelines for Unified Talent Management Hub
+# ============================================================
+
+version: "1.0"
+catalog: talent_management
+schema: unified_hub
+
+# ============================================================
+# SOURCE: HRIS (Workday) -> employees table
+# ============================================================
+sources:
+  - name: workday_hris
+    type: workday
+    connection:
+      host: ${WORKDAY_HOST}
+      tenant: ${WORKDAY_TENANT}
+      username: ${WORKDAY_USERNAME}
+      password: ${WORKDAY_PASSWORD}
+    tables:
+      - source_table: workers
+        target_table: employees_bronze
+        schedule: "0 */6 * * *"  # Every 6 hours
+        columns:
+          - source: worker_id
+            target: employee_id
+          - source: full_name
+            target: name
+          - source: work_email
+            target: email
+          - source: job_profile_name
+            target: title
+          - source: supervisory_organization
+            target: department
+          - source: job_level
+            target: level
+          - source: manager_worker_id
+            target: manager_id
+          - source: hire_date
+            target: hire_date
+          - source: work_location
+            target: location
+          - source: annual_salary
+            target: salary
+
+# ============================================================
+# SOURCE: Thomas International API -> thomas_assessments
+# ============================================================
+  - name: thomas_international
+    type: rest_api
+    connection:
+      base_url: https://api.thomasinternational.net/v2
+      auth_type: oauth2
+      client_id: ${THOMAS_CLIENT_ID}
+      client_secret: ${THOMAS_CLIENT_SECRET}
+    endpoints:
+      - endpoint: /assessments/ppa
+        target_table: thomas_ppa_bronze
+        schedule: "0 2 * * *"  # Daily at 2 AM
+        
+      - endpoint: /assessments/gia
+        target_table: thomas_gia_bronze
+        schedule: "0 2 * * *"
+        
+      - endpoint: /assessments/hpti
+        target_table: thomas_hpti_bronze
+        schedule: "0 2 * * *"
+
+# ============================================================
+# SOURCE: Greenhouse ATS -> recruitment tables
+# ============================================================
+  - name: greenhouse_ats
+    type: greenhouse
+    connection:
+      api_key: ${GREENHOUSE_API_KEY}
+    tables:
+      - source_table: jobs
+        target_table: recruitment_pipeline_bronze
+        schedule: "*/30 * * * *"  # Every 30 minutes
+        
+      - source_table: candidates
+        target_table: candidates_bronze
+        schedule: "*/15 * * * *"  # Every 15 minutes
+        
+      - source_table: scorecards
+        target_table: interview_scorecards_bronze
+        schedule: "*/15 * * * *"
+
+# ============================================================
+# SOURCE: Salesforce CRM -> sales metrics
+# ============================================================
+  - name: salesforce_crm
+    type: salesforce
+    connection:
+      instance_url: ${SALESFORCE_URL}
+      username: ${SALESFORCE_USERNAME}
+      password: ${SALESFORCE_PASSWORD}
+      security_token: ${SALESFORCE_TOKEN}
+    tables:
+      - source_table: Opportunity
+        target_table: sales_opportunities_bronze
+        schedule: "0 * * * *"  # Hourly
+        incremental:
+          key: LastModifiedDate
+          
+      - source_table: User
+        target_table: sales_users_bronze
+        schedule: "0 6 * * *"  # Daily
+
+# ============================================================
+# SOURCE: Jira -> engineering metrics
+# ============================================================
+  - name: jira_cloud
+    type: jira
+    connection:
+      base_url: ${JIRA_URL}
+      email: ${JIRA_EMAIL}
+      api_token: ${JIRA_API_TOKEN}
+    tables:
+      - source_table: issues
+        target_table: jira_issues_bronze
+        schedule: "*/30 * * * *"
+        filters:
+          project: "ENG,DATA,PLATFORM"
+          status_changed_after: "startOfMonth(-1)"
+          
+      - source_table: sprints
+        target_table: jira_sprints_bronze
+        schedule: "0 */4 * * *"
+
+# ============================================================
+# SOURCE: Slack -> sentiment analysis
+# ============================================================
+  - name: slack_enterprise
+    type: slack
+    connection:
+      app_token: ${SLACK_APP_TOKEN}
+      bot_token: ${SLACK_BOT_TOKEN}
+    tables:
+      - source_table: messages
+        target_table: slack_messages_bronze
+        schedule: "0 3 * * *"  # Daily at 3 AM
+        channels:
+          - general
+          - engineering
+          - sales
+          - product
+        # Note: Messages are anonymized and only sentiment is extracted
+
+# ============================================================
+# TRANSFORMATIONS: Bronze -> Silver -> Gold
+# ============================================================
+transformations:
+  
+  # Transform Thomas assessments
+  - name: thomas_assessments_silver
+    source_tables:
+      - thomas_ppa_bronze
+      - thomas_gia_bronze
+      - thomas_hpti_bronze
+    target_table: thomas_assessments
+    schedule: "0 4 * * *"
+    sql: |
+      SELECT 
+        ppa.assessment_id,
+        ppa.employee_id,
+        ppa.assessment_date,
+        ppa.dominance as ppa_dominance,
+        ppa.influence as ppa_influence,
+        ppa.steadiness as ppa_steadiness,
+        ppa.compliance as ppa_compliance,
+        gia.overall_score as gia_overall,
+        gia.perceptual_speed as gia_perceptual_speed,
+        gia.reasoning as gia_reasoning,
+        gia.number_speed as gia_number_speed,
+        gia.word_meaning as gia_word_meaning,
+        gia.spatial_visualization as gia_spatial,
+        hpti.conscientiousness as hpti_conscientiousness,
+        hpti.adjustment as hpti_adjustment,
+        hpti.curiosity as hpti_curiosity,
+        hpti.risk_approach as hpti_risk_approach,
+        hpti.ambiguity_acceptance as hpti_ambiguity_acceptance,
+        hpti.competitiveness as hpti_competitiveness
+      FROM thomas_ppa_bronze ppa
+      LEFT JOIN thomas_gia_bronze gia 
+        ON ppa.employee_id = gia.employee_id
+      LEFT JOIN thomas_hpti_bronze hpti 
+        ON ppa.employee_id = hpti.employee_id
+
+  # Calculate ideal profiles
+  - name: ideal_profiles_gold
+    source_tables:
+      - employees
+      - thomas_assessments
+      - performance_metrics
+    target_table: ideal_profiles
+    schedule: "0 5 * * 0"  # Weekly on Sunday
+    sql: |
+      WITH top_performers AS (
+        SELECT 
+          e.title as role_title,
+          e.department,
+          e.employee_id
+        FROM employees e
+        JOIN performance_metrics pm ON e.employee_id = pm.employee_id
+        WHERE pm.quarter = date_format(current_date(), 'yyyy') || '-Q' || quarter(current_date())
+        AND pm.performance_score >= (
+          SELECT percentile(performance_score, 0.75) 
+          FROM performance_metrics 
+          WHERE quarter = date_format(current_date(), 'yyyy') || '-Q' || quarter(current_date())
+        )
+      )
+      SELECT 
+        tp.role_title,
+        tp.department,
+        AVG(ta.ppa_dominance) as ppa_dominance,
+        AVG(ta.ppa_influence) as ppa_influence,
+        AVG(ta.ppa_steadiness) as ppa_steadiness,
+        AVG(ta.ppa_compliance) as ppa_compliance,
+        AVG(ta.gia_overall) as gia_overall,
+        AVG(ta.hpti_conscientiousness) as hpti_conscientiousness,
+        AVG(ta.hpti_adjustment) as hpti_adjustment,
+        AVG(ta.hpti_curiosity) as hpti_curiosity,
+        COUNT(DISTINCT tp.employee_id) as sample_size,
+        current_timestamp() as last_computed
+      FROM top_performers tp
+      JOIN thomas_assessments ta ON tp.employee_id = ta.employee_id
+      GROUP BY tp.role_title, tp.department
+
+  # Calculate performance metrics with sentiment
+  - name: performance_metrics_gold
+    source_tables:
+      - employees
+      - sales_opportunities_bronze
+      - jira_issues_bronze
+      - slack_messages_bronze
+    target_table: performance_metrics
+    schedule: "0 6 * * *"
+    sql: |
+      -- Aggregates sales revenue, Jira velocity, and Slack sentiment
+      -- See full SQL in databricks/transforms/performance_metrics.sql
+
+# ============================================================
+# DATA QUALITY EXPECTATIONS
+# ============================================================
+expectations:
+  - table: employees
+    checks:
+      - column: employee_id
+        not_null: true
+        unique: true
+      - column: email
+        regex: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        
+  - table: thomas_assessments
+    checks:
+      - column: ppa_dominance
+        min_value: 0
+        max_value: 100
+      - column: gia_overall
+        min_value: 50
+        max_value: 150
+        
+  - table: candidates
+    checks:
+      - column: match_score
+        min_value: 0
+        max_value: 100
+      - column: current_stage
+        allowed_values:
+          - Screening
+          - Phone Interview
+          - Technical Assessment
+          - Onsite Interview
+          - Final Round
+          - Offer
+          - Hired
+          - Rejected
+
+# ============================================================
+# ALERTS & MONITORING
+# ============================================================
+alerts:
+  - name: pipeline_failure
+    condition: pipeline_status = 'FAILED'
+    channels:
+      - email: data-eng@company.com
+      - slack: "#data-alerts"
+      
+  - name: data_quality_failure
+    condition: expectation_check = 'FAILED'
+    channels:
+      - email: data-eng@company.com
+      - slack: "#data-quality"
+      
+  - name: high_churn_risk
+    condition: "COUNT(churn_risk = 'High') > 5"
+    table: performance_metrics
+    channels:
+      - email: hr-leadership@company.com

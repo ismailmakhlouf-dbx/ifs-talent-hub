@@ -1,0 +1,116 @@
+"""
+Unified Talent Management Hub - FastAPI Backend
+Powered by Databricks + Thomas International
+"""
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from contextlib import asynccontextmanager
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from backend.routers import recruitment, performance, analytics, ai_insights
+from config import is_local_mode
+
+# Check if we have a built frontend
+STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
+HAS_STATIC = os.path.exists(STATIC_DIR) and os.path.exists(os.path.join(STATIC_DIR, "index.html"))
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan events"""
+    print("🚀 Starting IFS Talent Hub API (Powered by Thomas International)")
+    print(f"   Mode: {'Local (Mock Data)' if is_local_mode() else 'Databricks Connected'}")
+    print(f"   Static Files: {'Enabled' if HAS_STATIC else 'Disabled (development mode)'}")
+    
+    # Warm up Databricks SQL Warehouse
+    if not is_local_mode():
+        try:
+            from backend.services.databricks_ai import get_databricks_ai_service
+            ai_service = get_databricks_ai_service()
+            print("   ⏳ Warming up Databricks SQL Warehouse...")
+            if ai_service.warmup():
+                print("   ✅ SQL Warehouse warmed up successfully")
+            else:
+                print("   ⚠️  SQL Warehouse warmup failed - will use fallback")
+        except Exception as e:
+            print(f"   ⚠️  Warmup error: {e}")
+    
+    yield
+    print("👋 Shutting down API")
+
+
+app = FastAPI(
+    title="Unified Talent Management Hub",
+    description="Predictive insights for recruiting and performance management powered by Thomas International psychometric data",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+# CORS middleware for React frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include API routers
+app.include_router(recruitment.router, prefix="/api/recruitment", tags=["Recruitment"])
+app.include_router(performance.router, prefix="/api/performance", tags=["Performance"])
+app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
+app.include_router(ai_insights.router, prefix="/api/ai", tags=["AI Insights"])
+
+
+@app.get("/api")
+async def api_root():
+    return {
+        "name": "Unified Talent Management Hub API",
+        "version": "1.0.0",
+        "status": "running",
+        "mode": "local" if is_local_mode() else "databricks",
+    }
+
+
+@app.get("/api/health")
+async def health_check():
+    return {"status": "healthy"}
+
+
+# Serve static files and SPA routing if frontend is built
+if HAS_STATIC:
+    # Mount static assets (JS, CSS, images)
+    app.mount("/assets", StaticFiles(directory=os.path.join(STATIC_DIR, "assets")), name="assets")
+    
+    # Catch-all route for SPA - must be last
+    @app.get("/{full_path:path}")
+    async def serve_spa(request: Request, full_path: str):
+        """Serve the React SPA for all non-API routes"""
+        # Don't intercept API calls
+        if full_path.startswith("api/"):
+            return {"error": "Not found"}
+        
+        # Check if it's a static file request
+        static_file = os.path.join(STATIC_DIR, full_path)
+        if os.path.isfile(static_file):
+            return FileResponse(static_file)
+        
+        # Otherwise serve index.html for SPA routing
+        return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+else:
+    @app.get("/")
+    async def root():
+        return {
+            "name": "Unified Talent Management Hub",
+            "version": "1.0.0",
+            "status": "running",
+            "mode": "local" if is_local_mode() else "databricks",
+            "note": "Frontend not built. Run 'npm run build' in frontend directory.",
+        }

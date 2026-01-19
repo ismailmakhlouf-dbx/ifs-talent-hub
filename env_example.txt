@@ -1,0 +1,16 @@
+# Databricks Configuration
+# Copy this file to .env and fill in your values
+
+DATABRICKS_HOST=https://your-workspace.cloud.databricks.com
+DATABRICKS_TOKEN=your_databricks_token
+DATABRICKS_WAREHOUSE_ID=your_sql_warehouse_id
+DATABRICKS_CATALOG=talent_management
+DATABRICKS_SCHEMA=unified_hub
+
+# GenAI Configuration (Mosaic AI)
+DATABRICKS_MODEL_ENDPOINT=databricks-meta-llama-3-1-70b-instruct
+DATABRICKS_EMBEDDING_ENDPOINT=databricks-bge-large-en
+
+# App Configuration
+APP_MODE=local  # Options: local, databricks
+DEBUG=true

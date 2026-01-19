@@ -1,0 +1,19 @@
+# Unified Talent Management Hub - Backend Dependencies
+
+# FastAPI & Web Server
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.0
+
+# Databricks Integration
+databricks-sql-connector>=3.0.0
+databricks-sdk>=0.30.0
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Utilities
+python-dotenv>=1.0.0
+Faker>=22.0.0
+python-dateutil>=2.8.2

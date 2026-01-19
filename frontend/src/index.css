@@ -1,0 +1,333 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rubik:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   THOMAS INTERNATIONAL 2025/2026 REBRAND
+   "Thom AI" Aesthetic
+   ============================================ */
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+    font-family: 'Inter', 'Rubik', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-bg-warm text-text-primary antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+  
+  /* Typography - New Brand */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-thomas-slate font-semibold;
+  }
+  
+  h1 { @apply text-page-title; }
+  h2 { @apply text-section-title; }
+  h3 { @apply text-card-title; }
+  
+  /* Custom scrollbar - Warm theme */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-bg-warm rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-thomas-orange/30 rounded-full hover:bg-thomas-orange/50 transition-colors;
+  }
+}
+
+@layer components {
+  /* ============================================
+     CARD STYLES - Soft shadows, no borders
+     ============================================ */
+  
+  .card {
+    @apply bg-bg-card rounded-card shadow-card;
+    /* No border per new brand */
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-card-hover hover:-translate-y-0.5;
+  }
+  
+  .card-elevated {
+    @apply bg-bg-card rounded-card shadow-elevated;
+  }
+  
+  /* ============================================
+     BUTTON STYLES - Pill-shaped (50px radius)
+     ============================================ */
+  
+  .btn-primary {
+    @apply px-6 py-3 bg-thomas-orange text-white font-semibold rounded-pill;
+    @apply hover:bg-thomas-orange-dark transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-thomas-orange/30 focus:ring-offset-2;
+    @apply shadow-orange-glow;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 bg-white text-thomas-slate font-semibold rounded-pill;
+    @apply border-2 border-thomas-slate/10;
+    @apply hover:border-thomas-orange hover:text-thomas-orange transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-thomas-orange/20 focus:ring-offset-2;
+  }
+  
+  .btn-ai {
+    @apply px-6 py-3 font-semibold rounded-pill text-white;
+    @apply bg-ai-gradient hover:shadow-ai-glow transition-all duration-300;
+  }
+  
+  .btn-ghost {
+    @apply px-4 py-2 bg-transparent text-thomas-slate font-medium rounded-pill;
+    @apply hover:bg-thomas-orange/10 hover:text-thomas-orange transition-all duration-200;
+  }
+  
+  /* ============================================
+     AI / THOM STYLES - Pink/Magenta highlights
+     ============================================ */
+  
+  .ai-container {
+    @apply relative rounded-card overflow-hidden;
+    @apply bg-ai-gradient-soft;
+    @apply border border-thomas-pink/20;
+  }
+  
+  .ai-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5;
+    @apply bg-ai-gradient text-white rounded-pill;
+    @apply text-xs font-semibold;
+    @apply shadow-ai-glow;
+  }
+  
+  .ai-sparkle {
+    @apply text-thomas-pink;
+    filter: drop-shadow(0 0 4px rgba(233, 30, 99, 0.5));
+  }
+  
+  .ai-highlight {
+    @apply text-thomas-pink font-semibold;
+  }
+  
+  /* AI Confidence Gauge Gradient */
+  .ai-gauge {
+    @apply h-2 rounded-full overflow-hidden;
+    background: linear-gradient(90deg, #FF6B35 0%, #E91E63 100%);
+  }
+  
+  /* ============================================
+     HEXAGON SHAPES - For profiles & Thom
+     ============================================ */
+  
+  .hexagon {
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+  
+  .hexagon-sm {
+    @apply w-10 h-11;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+  
+  .hexagon-md {
+    @apply w-14 h-16;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+  
+  .hexagon-lg {
+    @apply w-20 h-22;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+  
+  .hexagon-border {
+    position: relative;
+  }
+  
+  .hexagon-border::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, #FF6B35, #E91E63);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    z-index: -1;
+  }
+  
+  /* ============================================
+     NAVIGATION STYLES
+     ============================================ */
+  
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl;
+    @apply text-text-secondary hover:text-thomas-orange hover:bg-thomas-orange/5;
+    @apply transition-all duration-200;
+  }
+  
+  .nav-active {
+    @apply bg-thomas-orange/10 text-thomas-orange font-medium;
+  }
+  
+  .nav-topbar {
+    @apply text-thomas-slate hover:text-thomas-orange transition-colors;
+  }
+  
+  /* ============================================
+     STATUS INDICATORS
+     ============================================ */
+  
+  .status-success {
+    @apply bg-success/10 text-success rounded-pill px-3 py-1 text-sm font-medium;
+  }
+  
+  .status-warning {
+    @apply bg-warning/10 text-warning rounded-pill px-3 py-1 text-sm font-medium;
+  }
+  
+  .status-danger {
+    @apply bg-thomas-orange/10 text-thomas-orange rounded-pill px-3 py-1 text-sm font-medium;
+  }
+  
+  .status-info {
+    @apply bg-info/10 text-info rounded-pill px-3 py-1 text-sm font-medium;
+  }
+  
+  /* ============================================
+     DATA TABLE STYLES
+     ============================================ */
+  
+  .data-table {
+    @apply w-full text-body;
+  }
+  
+  .data-table th {
+    @apply px-4 py-3 text-left font-semibold text-thomas-slate/70 bg-bg-warm;
+    @apply text-sm uppercase tracking-wider;
+  }
+  
+  .data-table td {
+    @apply px-4 py-4 text-text-primary;
+  }
+  
+  .data-table tr {
+    @apply border-b border-thomas-slate/5;
+  }
+  
+  .data-table tr:hover td {
+    @apply bg-bg-hover;
+  }
+  
+  /* ============================================
+     DISC PROFILE COLORS
+     ============================================ */
+  
+  .disc-d { @apply text-disc-dominance; }
+  .disc-i { @apply text-disc-influence; }
+  .disc-s { @apply text-disc-steadiness; }
+  .disc-c { @apply text-disc-compliance; }
+  
+  .disc-d-bg { @apply bg-disc-dominance; }
+  .disc-i-bg { @apply bg-disc-influence; }
+  .disc-s-bg { @apply bg-disc-steadiness; }
+  .disc-c-bg { @apply bg-disc-compliance; }
+  
+  /* ============================================
+     METRIC CARDS
+     ============================================ */
+  
+  .metric-card {
+    @apply bg-bg-card rounded-card shadow-soft p-6;
+    @apply transition-all duration-300 hover:shadow-card;
+  }
+  
+  .metric-value {
+    @apply text-3xl font-bold text-thomas-slate;
+  }
+  
+  .metric-label {
+    @apply text-small text-text-muted uppercase tracking-wider;
+  }
+  
+  /* ============================================
+     INPUT STYLES
+     ============================================ */
+  
+  .input {
+    @apply w-full px-4 py-3 bg-bg-card border border-thomas-slate/10 rounded-input;
+    @apply text-text-primary placeholder:text-text-muted;
+    @apply focus:outline-none focus:ring-2 focus:ring-thomas-orange/30 focus:border-thomas-orange;
+    @apply transition-all duration-200;
+  }
+  
+  .select {
+    @apply w-full px-4 py-3 bg-bg-card border border-thomas-slate/10 rounded-input;
+    @apply text-text-primary;
+    @apply focus:outline-none focus:ring-2 focus:ring-thomas-orange/30 focus:border-thomas-orange;
+    @apply transition-all duration-200 cursor-pointer;
+  }
+  
+  /* ============================================
+     ICON STYLES - Thin 1px stroke
+     ============================================ */
+  
+  .icon-thin {
+    stroke-width: 1px;
+  }
+  
+  .icon-light {
+    stroke-width: 1.5px;
+  }
+  
+  /* ============================================
+     CHAT BUBBLE STYLES
+     ============================================ */
+  
+  .chat-bubble {
+    @apply bg-white rounded-2xl px-4 py-3 shadow-soft;
+    @apply max-w-[80%];
+  }
+  
+  .chat-bubble-ai {
+    @apply bg-ai-gradient-soft border border-thomas-pink/20;
+  }
+  
+  .chat-send-btn {
+    @apply w-10 h-10 rounded-full bg-thomas-orange text-white;
+    @apply flex items-center justify-center;
+    @apply hover:bg-thomas-orange-dark transition-colors;
+    @apply shadow-orange-glow;
+  }
+  
+  /* ============================================
+     FOUR-POINT STAR (AI Sparkle)
+     ============================================ */
+  
+  .ai-star {
+    @apply text-thomas-pink;
+    filter: drop-shadow(0 0 6px rgba(233, 30, 99, 0.6));
+  }
+  
+  .ai-star-animate {
+    animation: sparkle 1.5s ease-in-out infinite;
+  }
+}
+
+@layer utilities {
+  /* Animation delays */
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
+  .animation-delay-500 { animation-delay: 500ms; }
+  
+  /* Height for hexagons */
+  .h-22 { height: 5.5rem; }
+  
+  /* Text gradient for AI */
+  .text-ai-gradient {
+    @apply bg-ai-gradient bg-clip-text text-transparent;
+  }
+}
