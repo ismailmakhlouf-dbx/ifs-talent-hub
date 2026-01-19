@@ -406,8 +406,8 @@ response = w.serving_endpoints.query(
         </div>
 
         {/* Technology Stack */}
-        <div className="mt-8 bg-gradient-to-r from-thomas-slate to-slate-700 rounded-2xl p-8 text-white">
-          <h3 className="font-display font-bold text-xl mb-6">Full Technology Stack</h3>
+        <div className="mt-8 bg-gradient-to-r from-thomas-slate to-slate-700 rounded-2xl p-8">
+          <h3 className="font-display font-bold text-xl mb-6 text-white">Full Technology Stack</h3>
           <div className="grid grid-cols-4 gap-6">
             <div>
               <h4 className="text-thomas-orange font-semibold mb-3">Frontend</h4>

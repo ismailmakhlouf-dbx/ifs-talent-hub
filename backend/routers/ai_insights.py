@@ -238,19 +238,22 @@ async def get_performance_summary(employee_id: str):
     if latest.empty:
         raise HTTPException(status_code=404, detail="No performance data found")
     
+    # Clean metrics data to handle NaN values
+    metrics_dict = clean_numpy_types(latest.iloc[0].to_dict())
+    
     summary = llm_service.summarize_quarter_performance(
         employee.iloc[0]["name"],
-        latest.iloc[0].to_dict(),
+        metrics_dict,
         ["Strong execution on key deliverables", "Growing into leadership role"]
     )
     
-    return {
+    return clean_numpy_types({
         "employee_id": employee_id,
-        "employee_name": employee.iloc[0]["name"],
+        "employee_name": str(employee.iloc[0]["name"]),
         "quarter": "2024-Q4",
         "summary": summary,
-        "metrics": latest.iloc[0].to_dict(),
-    }
+        "metrics": metrics_dict,
+    })
 
 
 @router.get("/leadership-potential/{employee_id}")
@@ -267,18 +270,23 @@ async def get_leadership_potential(employee_id: str):
     if assessments.empty:
         raise HTTPException(status_code=404, detail="No assessments found")
     
+    # Clean data to handle NaN values
+    employee_dict = clean_numpy_types(employee.iloc[0].to_dict())
+    assessment_dict = clean_numpy_types(assessments.iloc[0].to_dict())
+    performance_list = clean_numpy_types(performance.to_dict(orient="records"))
+    
     prediction = llm_service.predict_leadership_potential(
-        employee.iloc[0].to_dict(),
-        assessments.iloc[0].to_dict(),
-        performance.to_dict(orient="records")
+        employee_dict,
+        assessment_dict,
+        performance_list
     )
     
-    return {
+    return clean_numpy_types({
         "employee_id": employee_id,
-        "employee_name": employee.iloc[0]["name"],
-        "current_title": employee.iloc[0]["title"],
+        "employee_name": str(employee.iloc[0]["name"]),
+        "current_title": str(employee.iloc[0]["title"]),
         "prediction": prediction,
-    }
+    })
 
 
 @router.post("/churn-recommendation")
