@@ -128,7 +128,8 @@ const API_BASE = isDev ? 'http://localhost:8000' : ''
 interface Message {
   role: 'user' | 'assistant'
   content: string
-  highlightedContent?: string
+  thomasKeywords?: string[]
+  ifsKeywords?: string[]
   timestamp: Date
   sources?: string[]
 }
@@ -139,31 +140,76 @@ interface AskThomChatProps {
   onClose: () => void
 }
 
-// Parse highlighted text and render with colors
-function HighlightedText({ text }: { text: string }) {
-  // Parse [[THOMAS:keyword]] and [[IFS:keyword]] markers
-  const parts = text.split(/(\[\[(?:THOMAS|IFS):[^\]]+\]\])/g)
+// Thomas and IFS keywords for highlighting
+const THOMAS_KEYWORDS = [
+  'PPA', 'Personal Profile Analysis', 'DISC',
+  'GIA', 'General Intelligence Assessment',
+  'HPTI', 'High Potential Trait Indicator',
+  'TEIQue', 'Thomas Connect', 'Thomas Insights',
+  'Chemistry Score', 'Interpersonal Flexibility',
+  'Dominance', 'Influence', 'Steadiness', 'Compliance',
+  'Conscientiousness', 'Adjustment', 'Curiosity',
+  'Risk Approach', 'Ambiguity Acceptance', 'Competitiveness'
+]
+
+const IFS_KEYWORDS = [
+  'IFS', 'IFS Cloud', 'Industrial AI',
+  'ERP', 'Enterprise Resource Planning',
+  'EAM', 'Enterprise Asset Management',
+  'FSM', 'Field Service Management'
+]
+
+// Parse text and render with highlighted keywords
+function HighlightedText({ text, thomasKeywords = [], ifsKeywords = [] }: { 
+  text: string
+  thomasKeywords?: string[]
+  ifsKeywords?: string[]
+}) {
+  // Combine provided keywords with defaults
+  const allThomasKw = [...new Set([...THOMAS_KEYWORDS, ...thomasKeywords])]
+  const allIfsKw = [...new Set([...IFS_KEYWORDS, ...ifsKeywords])]
+  
+  // Build a regex pattern for all keywords
+  const allKeywords = [
+    ...allThomasKw.map(k => ({ keyword: k, type: 'thomas' })),
+    ...allIfsKw.map(k => ({ keyword: k, type: 'ifs' }))
+  ].sort((a, b) => b.keyword.length - a.keyword.length) // Longest first
+  
+  if (allKeywords.length === 0) {
+    return <>{text}</>
+  }
+  
+  // Create a combined pattern
+  const pattern = new RegExp(
+    `(${allKeywords.map(k => k.keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`,
+    'gi'
+  )
+  
+  const parts = text.split(pattern)
   
   return (
     <>
       {parts.map((part, i) => {
-        const thomasMatch = part.match(/\[\[THOMAS:([^\]]+)\]\]/)
-        const ifsMatch = part.match(/\[\[IFS:([^\]]+)\]\]/)
+        const lowerPart = part.toLowerCase()
         
-        if (thomasMatch) {
+        // Check if this part matches a Thomas keyword
+        if (allThomasKw.some(k => k.toLowerCase() === lowerPart)) {
           return (
             <span key={i} className="text-thomas-orange font-semibold" title="Thomas International">
-              {thomasMatch[1]}
+              {part}
             </span>
           )
         }
-        if (ifsMatch) {
+        
+        // Check if this part matches an IFS keyword
+        if (allIfsKw.some(k => k.toLowerCase() === lowerPart)) {
           return (
             <span key={i} className="text-ifs-purple font-semibold" title="IFS Cloud">
-              {ifsMatch[1]}
+              {part}
             </span>
           )
         }
+        
         return <span key={i}>{part}</span>
       })}
     </>
@@ -252,7 +298,8 @@ function AskThomChat({ context, contextData, onClose }: AskThomChatProps) {
         setMessages(prev => [...prev, {
           role: 'assistant',
           content: data.answer,
-          highlightedContent: data.highlighted_answer,
+          thomasKeywords: data.thomas_keywords_found || [],
+          ifsKeywords: data.ifs_keywords_found || [],
           timestamp: new Date(),
           sources: data.sources
         }])
@@ -376,8 +423,12 @@ function AskThomChat({ context, contextData, onClose }: AskThomChatProps) {
                     )}
                   >
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {msg.highlightedContent ? (
-                        <HighlightedText text={msg.highlightedContent} />
+                      {msg.role === 'assistant' ? (
+                        <HighlightedText 
+                          text={msg.content} 
+                          thomasKeywords={msg.thomasKeywords}
+                          ifsKeywords={msg.ifsKeywords}
+                        />
                       ) : (
                         msg.content
                       )}

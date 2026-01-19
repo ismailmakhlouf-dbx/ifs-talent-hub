@@ -279,10 +279,68 @@ async def get_referral_details(referral_id: str):
     })
 
 
+def _build_cv_text(referral: dict) -> str:
+    """Build CV text from referral data for AI extraction"""
+    import random
+    
+    name = referral["name"]
+    role = referral.get("role_title", "Software Engineer")
+    years_exp = referral.get("years_experience", 5)
+    current_company = referral.get("current_company", "TechCorp")
+    skills = referral.get("skills", ["Python", "SQL", "Leadership"])
+    
+    cv_text = f"""
+CURRICULUM VITAE
+
+Name: {name}
+Current Role: {role}
+Years of Experience: {years_exp}
+Current Company: {current_company}
+
+PROFESSIONAL SUMMARY
+Experienced {role} with {years_exp}+ years of expertise in enterprise software development. 
+Proven track record of delivering impactful solutions at scale. Strong technical foundation 
+combined with excellent communication and leadership abilities.
+
+SKILLS
+Technical: {', '.join(skills[:5]) if isinstance(skills, list) else skills}
+Tools: AWS, Azure, Docker, Kubernetes, Git, CI/CD
+Soft Skills: Leadership, Communication, Problem Solving, Stakeholder Management
+
+WORK EXPERIENCE
+{current_company} - {role}
+2021 - Present
+- Led cross-functional team on strategic initiatives
+- Delivered significant business value through process improvements
+- Established best practices for technical excellence
+
+Previous Company - Senior Engineer
+2018 - 2021
+- Promoted within 12 months due to exceptional performance
+- Mentored junior team members
+- Implemented scalable solutions serving large user base
+
+EDUCATION
+Computer Science, Imperial College London - 2015
+First Class Honours
+
+CERTIFICATIONS
+- AWS Solutions Architect - 2023
+- Agile Scrum Master - 2022
+
+LANGUAGES
+English (Native), French (Conversational)
+"""
+    return cv_text
+
+
 @router.post("/referrals/{referral_id}/extract-insights")
 async def extract_referral_insights(referral_id: str):
-    """Extract AI insights from CV and web crawling for a referral candidate"""
+    """Extract AI insights from CV and web crawling for a referral candidate using Databricks AI"""
     from data.mock_data import get_mock_data_generator
+    import logging
+    
+    logger = logging.getLogger(__name__)
     
     mock_gen = get_mock_data_generator()
     referrals = mock_gen.generate_referrals()
@@ -292,8 +350,55 @@ async def extract_referral_insights(referral_id: str):
     if not referral:
         raise HTTPException(status_code=404, detail="Referral not found")
     
-    # Extract AI insights (this would be async in production)
-    insights = mock_gen.extract_ai_insights(referral_id)
+    # Try to use real Databricks AI for extraction
+    ai_generated = False
+    insights = None
+    
+    try:
+        from backend.services.databricks_ai import get_databricks_ai_service
+        ai_service = get_databricks_ai_service()
+        
+        if ai_service:
+            # Build CV text from referral data
+            cv_text = _build_cv_text(referral)
+            
+            logger.info(f"Extracting insights for {referral['name']} using Databricks AI")
+            
+            # Call the real AI service
+            ai_insights = ai_service.extract_cv_insights_sql(
+                cv_text=cv_text,
+                candidate_name=referral["name"]
+            )
+            
+            if ai_insights:
+                logger.info("AI extraction successful")
+                # Get base mock data and merge with real AI insights
+                insights = mock_gen.extract_ai_insights(referral_id)
+                if "skills" in ai_insights:
+                    insights["cv_insights"]["skills"] = ai_insights["skills"]
+                if "summary" in ai_insights:
+                    insights["cv_insights"]["summary"] = ai_insights["summary"]
+                if "years_experience" in ai_insights:
+                    insights["cv_insights"]["years_experience"] = ai_insights["years_experience"]
+                if "education" in ai_insights:
+                    insights["cv_insights"]["education"] = ai_insights["education"]
+                ai_generated = True
+            else:
+                logger.info("AI extraction returned None")
+        else:
+            logger.info("AI service not available")
+            
+    except Exception as e:
+        logger.warning(f"AI extraction failed: {e}")
+        import traceback
+        logger.warning(traceback.format_exc())
+    
+    # Fallback to mock data if AI didn't work
+    if not insights:
+        logger.info("Using mock data for insights")
+        insights = mock_gen.extract_ai_insights(referral_id)
+    
+    insights["ai_generated"] = ai_generated
     
     # Get updated referral data
     updated_referral = next((r for r in mock_gen._referrals if r["referral_id"] == referral_id), referral)

@@ -808,6 +808,8 @@ def highlight_keywords(text: str) -> dict:
     Parse text and identify Thomas and IFS keywords for frontend highlighting.
     Returns the text with markers for highlighting.
     """
+    import re
+    
     thomas_keywords = get_thomas_kw()
     ifs_keywords = get_ifs_kw()
     
@@ -825,23 +827,11 @@ def highlight_keywords(text: str) -> dict:
         if keyword.lower() in text_lower:
             found_ifs.append(keyword)
     
-    # Create highlighted version with markers
-    # Using special markers that frontend will parse
-    highlighted = text
-    
-    # Sort keywords by length (longest first) to avoid partial replacements
-    for keyword in sorted(set(found_thomas), key=len, reverse=True):
-        import re
-        pattern = re.compile(re.escape(keyword), re.IGNORECASE)
-        highlighted = pattern.sub(f"[[THOMAS:{keyword}]]", highlighted)
-    
-    for keyword in sorted(set(found_ifs), key=len, reverse=True):
-        import re
-        pattern = re.compile(re.escape(keyword), re.IGNORECASE)
-        highlighted = pattern.sub(f"[[IFS:{keyword}]]", highlighted)
-    
+    # Don't modify the text with markers - just return found keywords
+    # The frontend will handle the highlighting
+    # This avoids issues with nested markers and markdown
     return {
-        "highlighted_text": highlighted,
+        "highlighted_text": text,  # Return original text
         "thomas_keywords": list(set(found_thomas)),
         "ifs_keywords": list(set(found_ifs))
     }
