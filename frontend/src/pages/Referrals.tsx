@@ -23,7 +23,7 @@ import {
 import { recruitmentApi, Referral, ReferralAIInsights } from '../lib/api'
 import { PPARadarChart } from '../components/Charts'
 import { ThomasProductLabel } from '../components/ThomasProductBadge'
-import { AskThomBadge } from '../components/AskThom'
+import { AskThomBadge, AskThomChat } from '../components/AskThom'
 import { PoweredByThomas, PoweredByInline } from '../components/PoweredByThomas'
 import { CVViewer } from '../components/CVViewer'
 import clsx from 'clsx'
@@ -35,6 +35,7 @@ export default function Referrals() {
   const [loading, setLoading] = useState(true)
   const [extracting, setExtracting] = useState(false)
   const [showCVViewer, setShowCVViewer] = useState(false)
+  const [showAskThom, setShowAskThom] = useState(false)
 
   useEffect(() => {
     recruitmentApi.getReferrals()
@@ -307,7 +308,7 @@ export default function Referrals() {
 
                 {/* AI Insights Section */}
                 {aiInsights ? (
-                  <AIInsightsView insights={aiInsights} />
+                  <AIInsightsView insights={aiInsights} selectedReferral={selectedReferral} />
                 ) : (
                   !extracting && (
                     <div className="bg-gradient-to-br from-purple-50 to-white rounded-2xl border-2 border-dashed border-purple-200 p-12 text-center">
@@ -386,12 +387,46 @@ export default function Referrals() {
           onClose={() => setShowCVViewer(false)}
         />
       )}
+      
+      {/* Floating AskThom Button - Visible when candidate selected */}
+      {selectedReferral && !showAskThom && (
+        <button
+          onClick={() => setShowAskThom(true)}
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-thomas-orange to-thomas-pink text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
+        >
+          <Sparkles className="w-5 h-5" />
+          Ask about {selectedReferral.name.split(' ')[0]}
+        </button>
+      )}
+      
+      {/* AskThom Chat */}
+      {showAskThom && selectedReferral && (
+        <AskThomChat
+          context="referral-candidate"
+          contextData={{
+            candidateName: selectedReferral.name,
+            role: selectedReferral.role_title,
+            company: selectedReferral.current_company,
+            yearsExperience: selectedReferral.years_experience,
+            skills: selectedReferral.skills,
+            status: selectedReferral.status,
+            aiInsights: aiInsights ? {
+              summary: aiInsights.ai_summary?.slice(0, 800),
+              predictedPPA: aiInsights.predicted_assessments?.ppa,
+              predictedGIA: aiInsights.predicted_assessments?.gia_estimated?.percentile,
+              skills: aiInsights.cv_insights?.skills,
+              linkedinHighlights: aiInsights.linkedin_insights?.activity_highlights,
+            } : undefined,
+          }}
+          onClose={() => setShowAskThom(false)}
+        />
+      )}
     </div>
   )
 }
 
 // AI Insights Rich View Component
-function AIInsightsView({ insights }: { insights: ReferralAIInsights }) {
+function AIInsightsView({ insights, selectedReferral }: { insights: ReferralAIInsights, selectedReferral: Referral | null }) {
   return (
     <div className="space-y-6">
       {/* Predicted Thomas Assessments - MOVED TO TOP */}
@@ -407,7 +442,18 @@ function AIInsightsView({ insights }: { insights: ReferralAIInsights }) {
                 <p className="text-xs text-white/60">Based on communication style and public content</p>
               </div>
             </div>
-            <AskThomBadge context="psychometric-prediction" size="sm" />
+            <AskThomBadge 
+              context="psychometric-prediction" 
+              size="sm" 
+              contextData={{
+                candidateName: selectedReferral?.name,
+                role: selectedReferral?.role_title,
+                yearsExperience: insights?.cv_insights?.years_experience,
+                skills: insights?.cv_insights?.skills,
+                predictedPPA: insights?.predicted_assessments?.ppa,
+                predictedGIA: insights?.predicted_assessments?.gia_estimated?.percentile,
+              }}
+            />
           </div>
         </div>
         
@@ -495,7 +541,20 @@ function AIInsightsView({ insights }: { insights: ReferralAIInsights }) {
                 <p className="text-xs text-white/60">Generated from CV and web sources</p>
               </div>
             </div>
-            <AskThomBadge context="candidate-analysis" size="sm" />
+            <AskThomBadge 
+              context="candidate-analysis" 
+              size="sm" 
+              contextData={{
+                candidateName: selectedReferral?.name,
+                role: selectedReferral?.role_title,
+                company: selectedReferral?.current_company,
+                yearsExperience: insights?.cv_insights?.years_experience,
+                skills: insights?.cv_insights?.skills,
+                summary: insights?.ai_summary?.slice(0, 500),
+                linkedinHighlights: insights?.linkedin_insights?.activity_highlights,
+                workHistory: insights?.work_history,
+              }}
+            />
           </div>
         </div>
         <div className="p-6 space-y-4">

@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react'
 import { X, Send, Sparkles, MessageCircle, Minimize2, Maximize2, Square } from 'lucide-react'
 import clsx from 'clsx'
 
-// Expansion mode type
-type ExpansionMode = 'normal' | 'half' | 'full'
+// Expansion mode type: normal (default), expanded (larger), full (fullscreen)
+type ExpansionMode = 'normal' | 'expanded' | 'full'
 
 // Four-Point Star SVG - Magenta (#E91E63) for AI features
 export const FourPointStar = ({ className = "w-4 h-4", animate = false }: { className?: string; animate?: boolean }) => (
@@ -266,7 +266,7 @@ function HighlightedText({ text, thomasKeywords = [], ifsKeywords = [] }: {
   )
 }
 
-function AskThomChat({ context, contextData, onClose }: AskThomChatProps) {
+export function AskThomChat({ context, contextData, onClose }: AskThomChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -283,21 +283,22 @@ function AskThomChat({ context, contextData, onClose }: AskThomChatProps) {
   // Cycle through expansion modes
   const cycleExpansion = () => {
     setExpansionMode(prev => {
-      if (prev === 'normal') return 'half'
-      if (prev === 'half') return 'full'
+      if (prev === 'normal') return 'expanded'
+      if (prev === 'expanded') return 'full'
       return 'normal'
     })
   }
 
   // Get container classes based on expansion mode
+  // Normal: Comfortable default size, Expanded: larger panel, Full: fullscreen
   const getContainerClasses = () => {
     switch (expansionMode) {
       case 'full':
-        return 'fixed inset-4 w-auto h-auto max-h-[calc(100vh-32px)]'
-      case 'half':
-        return 'fixed right-4 bottom-4 w-[420px] h-[50vh] max-h-[500px]'
+        return 'fixed inset-6 w-auto h-auto'
+      case 'expanded':
+        return 'fixed right-4 bottom-4 w-[500px] h-[70vh] max-h-[700px]'
       default:
-        return isMinimized ? 'w-72' : 'w-[380px] max-h-[50vh]'
+        return isMinimized ? 'w-80' : 'w-[420px] h-[450px]'
     }
   }
 
@@ -305,11 +306,11 @@ function AskThomChat({ context, contextData, onClose }: AskThomChatProps) {
   const getMessagesHeight = () => {
     switch (expansionMode) {
       case 'full':
-        return 'max-h-[calc(100vh-250px)] overflow-y-auto'
-      case 'half':
-        return 'max-h-[calc(50vh-180px)] overflow-y-auto'
+        return 'flex-1 overflow-y-auto'
+      case 'expanded':
+        return 'flex-1 overflow-y-auto'
       default:
-        return 'max-h-[250px] overflow-y-auto'
+        return 'flex-1 overflow-y-auto max-h-[280px]'
     }
   }
 
@@ -380,15 +381,13 @@ function AskThomChat({ context, contextData, onClose }: AskThomChatProps) {
 
   return (
     <div className={clsx(
-      "fixed z-50 pointer-events-none",
-      expansionMode === 'full' ? 'inset-0 p-4' : 
-      expansionMode === 'half' ? 'inset-0' : 
-      'inset-0 flex items-end justify-end p-4'
+      "fixed z-50 pointer-events-none inset-0 flex items-end justify-end p-4",
+      expansionMode === 'full' && 'p-6'
     )}>
-      {/* Backdrop for expanded modes */}
-      {expansionMode !== 'normal' && (
+      {/* Backdrop for full screen mode */}
+      {expansionMode === 'full' && (
         <div 
-          className="absolute inset-0 bg-black/30 pointer-events-auto" 
+          className="absolute inset-0 bg-black/40 pointer-events-auto" 
           onClick={() => setExpansionMode('normal')}
         />
       )}
@@ -413,11 +412,11 @@ function AskThomChat({ context, contextData, onClose }: AskThomChatProps) {
               <button
                 onClick={cycleExpansion}
                 className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                title={expansionMode === 'normal' ? 'Expand to half screen' : expansionMode === 'half' ? 'Expand to full screen' : 'Minimize'}
+                title={expansionMode === 'normal' ? 'Expand' : expansionMode === 'expanded' ? 'Fullscreen' : 'Shrink'}
               >
                 {expansionMode === 'full' ? (
                   <Minimize2 className="w-4 h-4 text-white" />
-                ) : expansionMode === 'half' ? (
+                ) : expansionMode === 'expanded' ? (
                   <Maximize2 className="w-4 h-4 text-white" />
                 ) : (
                   <Square className="w-4 h-4 text-white" />
