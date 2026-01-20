@@ -719,7 +719,8 @@ export default function RecruitmentDashboard({ managerId }: Props) {
                       {selectedRole.title}
                     </h2>
                     <p className="text-slate-500">
-                      {selectedRole.department} • {selectedRole.level} • ${(selectedRole.min_salary/1000).toFixed(0)}K - ${(selectedRole.max_salary/1000).toFixed(0)}K
+                      {selectedRole.department} • {selectedRole.level} • £{selectedRole.min_salary.toLocaleString()} - £{selectedRole.max_salary.toLocaleString()}
+                      {selectedRole.city && <span className="ml-2 text-slate-400">({selectedRole.city}, {selectedRole.country})</span>}
                     </p>
                   </div>
                 </div>
@@ -816,6 +817,9 @@ export default function RecruitmentDashboard({ managerId }: Props) {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="font-medium text-slate-800">{candidate.name}</p>
+                              {candidate.city && (
+                                <span className="text-xs text-slate-400">({candidate.city}, {candidate.country})</span>
+                              )}
                               <span className={clsx(
                                 'px-2 py-0.5 rounded-full text-xs font-medium',
                                 candidate.confidence_status === 'On Track' 
@@ -835,6 +839,10 @@ export default function RecruitmentDashboard({ managerId }: Props) {
                             </div>
                             <div className="text-center">
                               <p className="text-lg font-bold text-slate-700">{getSalaryFormatter(candidate)(candidate.expected_salary)}</p>
+                              {/* Show GBP equivalent for non-GBP currencies */}
+                              {candidate.currency !== 'GBP' && candidate.expected_salary_gbp && (
+                                <p className="text-[10px] text-slate-400">(£{candidate.expected_salary_gbp.toLocaleString()})</p>
+                              )}
                               <p className="text-xs text-slate-500">Expected</p>
                             </div>
                             <ArrowRight className="w-4 h-4 text-slate-400" />

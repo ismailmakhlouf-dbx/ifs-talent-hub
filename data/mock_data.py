@@ -424,12 +424,17 @@ class MockDataGenerator:
                 candidates_final = random.randint(0, 2)
                 candidates_offer = random.randint(0, 1)
                 
-                # Adjust salaries based on location using salary_multiplier
+                # ROLES are ALWAYS in GBP (company standard currency)
+                # Location is for where the role is based, but salary shown in GBP
+                base_salary_gbp = role_template["base_salary"]
+                max_salary_gbp = role_template["max_salary"]
+                industry_avg_gbp = role_template["industry_avg"]
+                company_avg_gbp = role_template["company_avg"]
+                
+                # Also calculate local currency equivalent for display
                 salary_mult = location.get("salary_multiplier", 1.0)
-                base_salary = round((role_template["base_salary"] * salary_mult) / 1000) * 1000
-                max_salary = round((role_template["max_salary"] * salary_mult) / 1000) * 1000
-                industry_avg = round((role_template["industry_avg"] * salary_mult) / 1000) * 1000
-                company_avg = round((role_template["company_avg"] * salary_mult) / 1000) * 1000
+                base_salary_local = round((base_salary_gbp * salary_mult) / 1000) * 1000
+                max_salary_local = round((max_salary_gbp * salary_mult) / 1000) * 1000
                 
                 roles.append({
                     "role_id": f"REQ-{2024000 + role_counter}",
@@ -463,14 +468,22 @@ class MockDataGenerator:
                     # Location info
                     "city": location["city"],
                     "country": location["country"],
-                    "currency": location["currency"],
-                    "currency_symbol": location["symbol"],
-                    "symbol_position": location.get("symbol_position", "before"),
-                    # Salary info (formatted for display)
-                    "min_salary": base_salary,
-                    "max_salary": max_salary,
-                    "industry_avg_salary": industry_avg,
-                    "company_avg_salary": company_avg,
+                    # Role salary is ALWAYS in GBP (company standard)
+                    "currency": "GBP",
+                    "currency_symbol": "£",
+                    "symbol_position": "before",
+                    # Salary info in GBP (company standard)
+                    "min_salary": base_salary_gbp,
+                    "max_salary": max_salary_gbp,
+                    "industry_avg_salary": industry_avg_gbp,
+                    "company_avg_salary": company_avg_gbp,
+                    # Local currency equivalent for reference
+                    "local_currency": location["currency"],
+                    "local_currency_symbol": location["symbol"],
+                    "local_symbol_position": location.get("symbol_position", "before"),
+                    "min_salary_local": base_salary_local,
+                    "max_salary_local": max_salary_local,
+                    "salary_multiplier": salary_mult,
                     "required_interviews_per_week": max(3, (25 - days_until_target // 5)),
                     "current_pipeline_count": candidates_phone + candidates_tech + candidates_onsite + candidates_final + candidates_offer,
                     "created_date": (datetime.now() - timedelta(days=random.randint(7, 60))).date(),
@@ -511,6 +524,17 @@ class MockDataGenerator:
                 if s["order"] <= stage["order"]:
                     interview_scores[s["name"]] = random.randint(60, 100)
             
+            # Candidate expected salary in LOCAL currency
+            # Role min/max are in GBP, convert to local using salary_multiplier
+            salary_mult = role.get("salary_multiplier", 1.0)
+            local_currency = role.get("local_currency", "GBP")
+            local_symbol = role.get("local_currency_symbol", "£")
+            local_symbol_pos = role.get("local_symbol_position", "before")
+            
+            # Expected salary in local currency
+            expected_salary_gbp = random.randint(int(role["min_salary"]), int(role["max_salary"]))
+            expected_salary_local = round((expected_salary_gbp * salary_mult) / 1000) * 1000
+            
             candidates.append({
                 "candidate_id": f"CAN-{3000 + i}",
                 "name": fake.name(),
@@ -542,15 +566,22 @@ class MockDataGenerator:
                 # Location info from role
                 "city": role.get("city", "London"),
                 "country": role.get("country", "United Kingdom"),
-                "currency": role.get("currency", "GBP"),
-                "currency_symbol": role.get("currency_symbol", "£"),
-                "symbol_position": role.get("symbol_position", "before"),
-                # Salary info (rounded to nearest 1000)
-                "expected_salary": round(random.randint(int(role["min_salary"]), int(role["max_salary"])) / 1000) * 1000,
+                # Local currency for candidate's expected salary
+                "currency": local_currency,
+                "currency_symbol": local_symbol,
+                "symbol_position": local_symbol_pos,
+                # Salary in LOCAL currency
+                "expected_salary": expected_salary_local,
+                # Also store GBP equivalent for comparison
+                "expected_salary_gbp": expected_salary_gbp,
+                # Role salary range (always in GBP)
                 "min_salary": int(role["min_salary"]),
                 "max_salary": int(role["max_salary"]),
+                "min_salary_local": int(role.get("min_salary_local", role["min_salary"])),
+                "max_salary_local": int(role.get("max_salary_local", role["max_salary"])),
                 "industry_avg_salary": int(role.get("industry_avg_salary", role["min_salary"] * 1.1)),
                 "company_avg_salary": int(role.get("company_avg_salary", role["min_salary"] * 1.05)),
+                "salary_multiplier": salary_mult,
                 "negotiation_flexibility": random.choice(["Low", "Medium", "High"]),
                 "source": random.choice(["LinkedIn", "Referral", "Indeed", "Company Website", "Recruiter"]),
                 "applied_date": (datetime.now() - timedelta(days=random.randint(7, 60))).date(),
