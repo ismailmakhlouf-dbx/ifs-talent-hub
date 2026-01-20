@@ -9,6 +9,21 @@ from typing import Dict, List, Any
 import pandas as pd
 from faker import Faker
 
+# Import currency utilities for consistent FX conversion
+from data.currency import (
+    FX_RATES, 
+    CURRENCY_CONFIG, 
+    convert_gbp_to_currency, 
+    convert_currency_to_gbp,
+    format_currency,
+    get_currency_config,
+    get_fx_rate,
+    get_salary_multiplier,
+    convert_salary_range,
+    generate_expected_salary,
+    LOCATIONS as CURRENCY_LOCATIONS
+)
+
 fake = Faker()
 Faker.seed(42)
 random.seed(42)
@@ -21,23 +36,12 @@ class MockDataGenerator:
     PPA_TRAITS = ["Dominance", "Influence", "Steadiness", "Compliance"]
     HPTI_TRAITS = ["Conscientiousness", "Adjustment", "Curiosity", "Risk_Approach", "Ambiguity_Acceptance", "Competitiveness"]
     
-    # Location definitions with currency - IFS Global Offices (UK, US, Sweden)
-    # Currency display: GBP = "£60,000", USD = "$120,000", SEK = "720,000 SEK"
-    # Balanced mix of the 3 main regions
-    LOCATIONS = [
-        # United Kingdom - UK HQ and offices
-        {"city": "Staines", "country": "United Kingdom", "currency": "GBP", "symbol": "£", "symbol_position": "before", "salary_multiplier": 1.0},
-        {"city": "London", "country": "United Kingdom", "currency": "GBP", "symbol": "£", "symbol_position": "before", "salary_multiplier": 1.10},
-        {"city": "Manchester", "country": "United Kingdom", "currency": "GBP", "symbol": "£", "symbol_position": "before", "salary_multiplier": 0.92},
-        # Sweden - Global HQ
-        {"city": "Linköping", "country": "Sweden", "currency": "SEK", "symbol": "SEK", "symbol_position": "after", "salary_multiplier": 10.5},  # ~10.5 SEK per GBP
-        {"city": "Stockholm", "country": "Sweden", "currency": "SEK", "symbol": "SEK", "symbol_position": "after", "salary_multiplier": 11.2},
-        {"city": "Gothenburg", "country": "Sweden", "currency": "SEK", "symbol": "SEK", "symbol_position": "after", "salary_multiplier": 10.8},
-        # United States
-        {"city": "Chicago", "country": "United States", "currency": "USD", "symbol": "$", "symbol_position": "before", "salary_multiplier": 1.55},  # ~1.55x UK salary
-        {"city": "Dallas", "country": "United States", "currency": "USD", "symbol": "$", "symbol_position": "before", "salary_multiplier": 1.45},
-        {"city": "Atlanta", "country": "United States", "currency": "USD", "symbol": "$", "symbol_position": "before", "salary_multiplier": 1.40},
-    ]
+    # Location definitions - use imported CURRENCY_LOCATIONS for proper FX rates
+    # All salary conversions use the centralized FX_RATES from currency.py
+    # - GBP: "£60,000" (1 GBP = 1 GBP)
+    # - USD: "$76,200" (1 GBP = 1.27 USD)
+    # - SEK: "792,000 SEK" (1 GBP = 13.20 SEK)
+    LOCATIONS = CURRENCY_LOCATIONS
     
     # ===========================================
     # IFS ORGANIZATIONAL STRUCTURE
@@ -120,40 +124,36 @@ class MockDataGenerator:
     
     def _format_salary(self, base_salary_gbp: int, location: dict) -> tuple:
         """
-        Convert GBP base salary to local currency and format correctly.
+        Convert GBP base salary to local currency and format correctly using FX rates.
         Returns (formatted_string, raw_value, currency, symbol)
         
-        Formats:
-        - GBP: "£60,000"
-        - USD: "$120,000"
-        - SEK: "720,000 SEK"
+        Uses centralized FX_RATES:
+        - GBP: "£60,000" (1:1)
+        - USD: "$76,200" (1 GBP = 1.27 USD)
+        - SEK: "792,000 SEK" (1 GBP = 13.20 SEK)
         """
-        multiplier = location.get("salary_multiplier", 1.0)
-        local_salary = int(base_salary_gbp * multiplier)
+        currency = location.get("currency", "GBP")
         
-        # Round to nearest 1000 for cleaner numbers
-        local_salary = round(local_salary / 1000) * 1000
+        # Use centralized conversion function
+        local_salary = convert_gbp_to_currency(base_salary_gbp, currency)
         
-        currency = location["currency"]
-        symbol = location["symbol"]
-        symbol_position = location.get("symbol_position", "before")
+        # Apply cost-of-living adjustment if present
+        cost_adj = location.get("cost_adjustment", 1.0)
+        local_salary = round((local_salary * cost_adj) / 1000) * 1000
         
-        # Format with thousand separators
-        formatted_number = f"{local_salary:,}"
+        # Get currency config
+        config = get_currency_config(currency)
+        symbol = config["symbol"]
+        symbol_position = config["position"]
         
-        if symbol_position == "after":
-            formatted = f"{formatted_number} {symbol}"
-        else:
-            formatted = f"{symbol}{formatted_number}"
+        # Format the string
+        formatted = format_currency(local_salary, currency)
         
         return formatted, local_salary, currency, symbol
     
     def _get_realistic_salary_range(self, base_min: int, base_max: int, location: dict) -> tuple:
-        """Get realistic salary range for a location"""
-        multiplier = location.get("salary_multiplier", 1.0)
-        local_min = round((base_min * multiplier) / 1000) * 1000
-        local_max = round((base_max * multiplier) / 1000) * 1000
-        return local_min, local_max
+        """Get realistic salary range for a location using FX rates"""
+        return convert_salary_range(base_min, base_max, location)
     
     # ========================================
     # EMPLOYEE DATA
@@ -431,10 +431,13 @@ class MockDataGenerator:
                 industry_avg_gbp = role_template["industry_avg"]
                 company_avg_gbp = role_template["company_avg"]
                 
-                # Also calculate local currency equivalent for display
-                salary_mult = location.get("salary_multiplier", 1.0)
-                base_salary_local = round((base_salary_gbp * salary_mult) / 1000) * 1000
-                max_salary_local = round((max_salary_gbp * salary_mult) / 1000) * 1000
+                # Calculate local currency equivalent using centralized FX rates
+                local_currency = location.get("currency", "GBP")
+                base_salary_local, max_salary_local = convert_salary_range(
+                    base_salary_gbp, max_salary_gbp, location
+                )
+                # Get the actual multiplier used (for reference)
+                salary_mult = get_salary_multiplier(location)
                 
                 roles.append({
                     "role_id": f"REQ-{2024000 + role_counter}",
@@ -477,13 +480,14 @@ class MockDataGenerator:
                     "max_salary": max_salary_gbp,
                     "industry_avg_salary": industry_avg_gbp,
                     "company_avg_salary": company_avg_gbp,
-                    # Local currency equivalent for reference
-                    "local_currency": location["currency"],
-                    "local_currency_symbol": location["symbol"],
-                    "local_symbol_position": location.get("symbol_position", "before"),
+                    # Local currency equivalent for reference (using FX rates)
+                    "local_currency": local_currency,
+                    "local_currency_symbol": get_currency_config(local_currency)["symbol"],
+                    "local_symbol_position": get_currency_config(local_currency)["position"],
                     "min_salary_local": base_salary_local,
                     "max_salary_local": max_salary_local,
                     "salary_multiplier": salary_mult,
+                    "fx_rate": get_fx_rate(local_currency),
                     "required_interviews_per_week": max(3, (25 - days_until_target // 5)),
                     "current_pipeline_count": candidates_phone + candidates_tech + candidates_onsite + candidates_final + candidates_offer,
                     "created_date": (datetime.now() - timedelta(days=random.randint(7, 60))).date(),
@@ -524,16 +528,27 @@ class MockDataGenerator:
                 if s["order"] <= stage["order"]:
                     interview_scores[s["name"]] = random.randint(60, 100)
             
-            # Candidate expected salary in LOCAL currency
-            # Role min/max are in GBP, convert to local using salary_multiplier
-            salary_mult = role.get("salary_multiplier", 1.0)
+            # Candidate expected salary - use centralized FX conversion
+            # Role min/max are in GBP, candidate salary shown in LOCAL currency
             local_currency = role.get("local_currency", "GBP")
-            local_symbol = role.get("local_currency_symbol", "£")
-            local_symbol_pos = role.get("local_symbol_position", "before")
+            local_config = get_currency_config(local_currency)
+            local_symbol = local_config["symbol"]
+            local_symbol_pos = local_config["position"]
             
-            # Expected salary in local currency
+            # Generate expected salary using FX rates
+            # First pick a GBP value within the role range, then convert
             expected_salary_gbp = random.randint(int(role["min_salary"]), int(role["max_salary"]))
-            expected_salary_local = round((expected_salary_gbp * salary_mult) / 1000) * 1000
+            expected_salary_gbp = round(expected_salary_gbp / 1000) * 1000  # Round to nearest 1000
+            
+            # Convert to local currency using proper FX rate
+            expected_salary_local = convert_gbp_to_currency(expected_salary_gbp, local_currency)
+            
+            # Apply cost adjustment if role has it (city-specific)
+            if role.get("salary_multiplier"):
+                # The salary_multiplier includes cost adjustment, FX rate is separate
+                cost_adj = role.get("salary_multiplier") / get_fx_rate(local_currency)
+                if cost_adj > 0 and cost_adj != 1.0:
+                    expected_salary_local = round((expected_salary_local * cost_adj) / 1000) * 1000
             
             candidates.append({
                 "candidate_id": f"CAN-{3000 + i}",
@@ -581,7 +596,8 @@ class MockDataGenerator:
                 "max_salary_local": int(role.get("max_salary_local", role["max_salary"])),
                 "industry_avg_salary": int(role.get("industry_avg_salary", role["min_salary"] * 1.1)),
                 "company_avg_salary": int(role.get("company_avg_salary", role["min_salary"] * 1.05)),
-                "salary_multiplier": salary_mult,
+                "salary_multiplier": role.get("salary_multiplier", 1.0),
+                "fx_rate": get_fx_rate(local_currency),
                 "negotiation_flexibility": random.choice(["Low", "Medium", "High"]),
                 "source": random.choice(["LinkedIn", "Referral", "Indeed", "Company Website", "Recruiter"]),
                 "applied_date": (datetime.now() - timedelta(days=random.randint(7, 60))).date(),
