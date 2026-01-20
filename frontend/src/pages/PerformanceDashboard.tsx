@@ -22,6 +22,7 @@ import { ChurnRiskBadge } from '../components/StatusBadge'
 import { CircularProgress } from '../components/ProgressBar'
 import { AskThomBadge } from '../components/AskThom'
 import { PoweredByThomas, PoweredByInline } from '../components/PoweredByThomas'
+import { usePageContext } from '../contexts/PageContext'
 import clsx from 'clsx'
 
 interface Props {
@@ -30,12 +31,28 @@ interface Props {
 
 export default function PerformanceDashboard({ managerId }: Props) {
   const navigate = useNavigate()
+  const { setPageContext } = usePageContext()
   const [stats, setStats] = useState<PerformanceStats | null>(null)
   const [team, setTeam] = useState<TeamData | null>(null)
   const [atRisk, setAtRisk] = useState<AtRiskData | null>(null)
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'org' | 'list'>('org')
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
+
+  // Update page context for AskThom
+  useEffect(() => {
+    setPageContext({
+      pageName: 'Performance Dashboard',
+      pageDescription: 'Viewing team performance metrics and employee health',
+      teamSize: stats?.team_size || 0,
+      avgPerformance: stats?.avg_performance || 0,
+      avgMorale: stats?.avg_morale || 0,
+      highChurnRiskCount: stats?.high_risk_count || 0,
+      atRiskEmployees: atRisk?.at_risk?.map(e => e.name).slice(0, 5) || [],
+      criticalEvents: atRisk?.critical_events?.length || 0,
+      viewMode
+    })
+  }, [stats, atRisk, viewMode, setPageContext])
 
   useEffect(() => {
     setLoading(true)
@@ -220,7 +237,7 @@ export default function PerformanceDashboard({ managerId }: Props) {
             variant={(stats?.avg_morale || 0) > 70 ? 'success' : 'warning'}
           />
           <MetricCard
-            title="At Risk"
+            title="High Churn Risk"
             value={stats?.high_risk_count || 0}
             subtitle="need attention"
             icon={<AlertTriangle className="w-5 h-5" />}
@@ -384,7 +401,7 @@ export default function PerformanceDashboard({ managerId }: Props) {
                       <AlertTriangle className="w-5 h-5 text-danger" />
                     </div>
                     <div>
-                      <h3 className="font-display font-semibold text-slate-800">At-Risk Employees</h3>
+                      <h3 className="font-display font-semibold text-slate-800">High Churn Risk Employees</h3>
                       <p className="text-xs text-slate-500">{atRisk.at_risk.length} require attention</p>
                     </div>
                   </div>
@@ -411,7 +428,7 @@ export default function PerformanceDashboard({ managerId }: Props) {
                 </div>
                 
                 <button className="w-full mt-4 py-2 text-sm text-danger font-medium hover:bg-danger/10 rounded-lg transition-colors">
-                  View All At-Risk →
+                  View All High Churn Risk →
                 </button>
               </div>
             )}

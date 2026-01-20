@@ -16,6 +16,7 @@ import {
   Code,
   Sparkles
 } from 'lucide-react'
+import { usePageContext } from '../contexts/PageContext'
 import clsx from 'clsx'
 
 interface SystemStatus {
@@ -26,14 +27,29 @@ interface SystemStatus {
   sql_warehouse_available: boolean
   sql_warehouse_warmed_up: boolean
   lakebase_available: boolean
+  lakebase_status?: string
   model_endpoint: string
   host: string
   environment: string
 }
 
 export default function UnderTheHood() {
+  const { setPageContext } = usePageContext()
   const [status, setStatus] = useState<SystemStatus | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Update page context for AskThom
+  useEffect(() => {
+    setPageContext({
+      pageName: 'Under the Hood',
+      pageDescription: 'System architecture and live status of Databricks components',
+      systemDiagram: 'IFS Talent Hub Architecture: React Frontend → FastAPI Backend → Databricks (Model Serving + Lakebase)',
+      isDatabricksApp: status?.is_databricks_app || false,
+      modelEndpoint: status?.model_endpoint || 'Not connected',
+      sqlWarehouseStatus: status?.sql_warehouse_available ? 'Available' : 'Unavailable',
+      lakebaseStatus: status?.lakebase_available ? 'Available' : 'Unavailable'
+    })
+  }, [status, setPageContext])
 
   useEffect(() => {
     fetchStatus()
@@ -247,10 +263,10 @@ export default function UnderTheHood() {
             />
             <StatusCard 
               label="Lakebase"
-              value={status?.lakebase_available ? 'Available' : 'Checking...'}
-              status={status?.lakebase_available ? 'success' : 'warning'}
+              value={status?.lakebase_available ? 'Available' : (status?.lakebase_status || 'Not Deployed')}
+              status={status?.lakebase_available ? 'success' : 'muted'}
               icon={Layers}
-              detail="Delta Lake + Unity Catalog"
+              detail={status?.lakebase_available ? "Delta Lake + Unity Catalog" : "Future: Production Data Layer"}
             />
             <StatusCard 
               label="SDK Connection"
@@ -453,6 +469,195 @@ response = w.serving_endpoints.query(
             </div>
           </div>
         </div>
+
+        {/* Production Architecture - Multi-Agent System */}
+        <div className="mt-8 bg-white rounded-2xl shadow-card p-8 border border-slate-200">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="font-display font-bold text-xl text-thomas-slate">Production Architecture</h3>
+              <p className="text-slate-500">Multi-Agent Supervisor Pattern using Databricks</p>
+            </div>
+          </div>
+
+          {/* Supervisor Agent at the top */}
+          <div className="relative">
+            {/* Supervisor */}
+            <div className="flex justify-center mb-6">
+              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl px-8 py-4 shadow-lg">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                    <Cpu className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-white">
+                    <h4 className="font-bold text-lg">Supervisor Agent</h4>
+                    <p className="text-white/70 text-sm">Orchestrates all child agents • Routes tasks • Manages state</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Connection lines */}
+            <div className="absolute top-20 left-1/2 w-px h-8 bg-gradient-to-b from-purple-400 to-transparent" />
+            
+            {/* Agent Grid */}
+            <div className="grid grid-cols-5 gap-4 mt-8">
+              {/* CV Parser Agent */}
+              <AgentCard
+                name="CV Parser Agent"
+                description="Extracts structured data from resumes using vision + NLP"
+                tasks={["Parse PDF/DOCX", "Extract skills", "Work history", "Education"]}
+                model="Gemini 2.5 Flash"
+                icon="📄"
+                color="from-blue-500 to-cyan-500"
+              />
+
+              {/* Web Enrichment Agent */}
+              <AgentCard
+                name="Web Enrichment Agent"
+                description="Crawls external sources for candidate intelligence"
+                tasks={["LinkedIn scraping", "GitHub analysis", "Blog/article finder", "YouTube talks"]}
+                model="Gemini + Crawl4AI"
+                icon="🌐"
+                color="from-green-500 to-emerald-500"
+              />
+
+              {/* Psychometric Agent */}
+              <AgentCard
+                name="Psychometric Agent"
+                description="Analyzes Thomas assessments and predicts fit"
+                tasks={["PPA analysis", "GIA interpretation", "HPTI scoring", "Chemistry prediction"]}
+                model="Custom fine-tuned"
+                icon="🧠"
+                color="from-thomas-orange to-thomas-pink"
+              />
+
+              {/* Interview Agent */}
+              <AgentCard
+                name="Interview Agent"
+                description="Processes interview transcripts and generates insights"
+                tasks={["Transcript analysis", "Sentiment detection", "Bias detection", "Score generation"]}
+                model="Gemini 2.5 Flash"
+                icon="🎤"
+                color="from-amber-500 to-orange-500"
+              />
+
+              {/* Recommendation Agent */}
+              <AgentCard
+                name="Recommendation Agent"
+                description="Generates hiring and retention recommendations"
+                tasks={["Offer strategy", "Negotiation levers", "Churn prevention", "Development plans"]}
+                model="Gemini 2.5 Flash"
+                icon="💡"
+                color="from-pink-500 to-rose-500"
+              />
+            </div>
+
+            {/* Second row of agents */}
+            <div className="grid grid-cols-4 gap-4 mt-4 max-w-4xl mx-auto">
+              {/* Data Integration Agent */}
+              <AgentCard
+                name="Data Integration Agent"
+                description="Syncs data across HRIS, CRM, and internal systems"
+                tasks={["IFS Cloud sync", "Jira data", "Slack sentiment", "Email analysis"]}
+                model="Databricks Workflows"
+                icon="🔄"
+                color="from-slate-600 to-slate-700"
+              />
+
+              {/* Compliance Agent */}
+              <AgentCard
+                name="Compliance Agent"
+                description="Ensures GDPR, bias checks, and audit trails"
+                tasks={["PII masking", "Bias monitoring", "Audit logging", "Data retention"]}
+                model="Unity Catalog + Rules"
+                icon="🛡️"
+                color="from-teal-500 to-cyan-600"
+              />
+
+              {/* Notification Agent */}
+              <AgentCard
+                name="Notification Agent"
+                description="Sends alerts and updates to stakeholders"
+                tasks={["Email alerts", "Slack notifications", "Calendar invites", "Status updates"]}
+                model="Databricks Workflows"
+                icon="📬"
+                color="from-violet-500 to-purple-600"
+              />
+
+              {/* Analytics Agent */}
+              <AgentCard
+                name="Analytics Agent"
+                description="Generates reports and dashboard metrics"
+                tasks={["KPI calculation", "Trend analysis", "Forecasting", "Benchmark comparison"]}
+                model="Databricks SQL + AI"
+                icon="📊"
+                color="from-indigo-500 to-blue-600"
+              />
+            </div>
+          </div>
+
+          {/* Infrastructure Components */}
+          <div className="mt-8 pt-8 border-t border-slate-200">
+            <h4 className="font-semibold text-thomas-slate mb-4">Infrastructure Components</h4>
+            <div className="grid grid-cols-6 gap-3">
+              <InfraCard icon={<Database className="w-5 h-5" />} label="Vector Store" detail="Mosaic AI Vector Search" />
+              <InfraCard icon={<Layers className="w-5 h-5" />} label="Delta Tables" detail="Lakebase Storage" />
+              <InfraCard icon={<Server className="w-5 h-5" />} label="Model Registry" detail="Unity Catalog" />
+              <InfraCard icon={<GitBranch className="w-5 h-5" />} label="MLflow" detail="Experiment Tracking" />
+              <InfraCard icon={<Zap className="w-5 h-5" />} label="Serverless" detail="Auto-scaling Compute" />
+              <InfraCard icon={<Shield className="w-5 h-5" />} label="Governance" detail="Column-level Security" />
+            </div>
+          </div>
+
+          {/* Agent Communication Protocol */}
+          <div className="mt-8 pt-8 border-t border-slate-200">
+            <h4 className="font-semibold text-thomas-slate mb-4">Agent Communication Protocol</h4>
+            <div className="bg-slate-900 rounded-xl p-4 overflow-x-auto">
+              <pre className="text-xs text-green-400">
+{`# Multi-Agent Supervisor using Databricks
+from databricks.agents import AgentSupervisor, Agent
+from databricks.sdk import WorkspaceClient
+
+class TalentHubSupervisor(AgentSupervisor):
+    def __init__(self):
+        self.agents = {
+            "cv_parser": CVParserAgent(),
+            "enrichment": WebEnrichmentAgent(),
+            "psychometric": PsychometricAgent(),
+            "interview": InterviewAgent(),
+            "recommendation": RecommendationAgent()
+        }
+        self.state = AgentState()  # Shared memory
+    
+    async def process_candidate(self, candidate_id: str):
+        # Step 1: Parse CV
+        cv_data = await self.agents["cv_parser"].run(candidate_id)
+        self.state.update("cv_data", cv_data)
+        
+        # Step 2: Parallel enrichment and psychometric analysis
+        enrichment, psych = await asyncio.gather(
+            self.agents["enrichment"].run(cv_data),
+            self.agents["psychometric"].run(candidate_id)
+        )
+        
+        # Step 3: Generate recommendations
+        recommendation = await self.agents["recommendation"].run(
+            cv=cv_data,
+            enrichment=enrichment,
+            psychometrics=psych
+        )
+        
+        # Store in Delta Lake
+        await self.save_to_lakehouse(candidate_id, recommendation)
+        
+        return recommendation`}
+              </pre>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -468,20 +673,22 @@ function StatusCard({
 }: { 
   label: string
   value: string
-  status: 'success' | 'warning' | 'error'
+  status: 'success' | 'warning' | 'error' | 'muted'
   icon: React.ComponentType<{ className?: string }>
   detail?: string
 }) {
   const statusColors = {
     success: 'bg-success/10 text-success border-success/20',
     warning: 'bg-warning/10 text-warning border-warning/20',
-    error: 'bg-danger/10 text-danger border-danger/20'
+    error: 'bg-danger/10 text-danger border-danger/20',
+    muted: 'bg-slate-100 text-slate-500 border-slate-200'
   }
   
   const iconColors = {
     success: 'text-success',
     warning: 'text-warning',
-    error: 'text-danger'
+    error: 'text-danger',
+    muted: 'text-slate-400'
   }
 
   return (
@@ -497,6 +704,69 @@ function StatusCard({
       {detail && (
         <p className="text-xs mt-1 font-mono opacity-70">{detail}</p>
       )}
+    </div>
+  )
+}
+
+// Agent Card Component for Production Architecture
+function AgentCard({ 
+  name, 
+  description, 
+  tasks, 
+  model, 
+  icon, 
+  color 
+}: { 
+  name: string
+  description: string
+  tasks: string[]
+  model: string
+  icon: string
+  color: string
+}) {
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+      <div className={`bg-gradient-to-r ${color} px-4 py-3`}>
+        <div className="flex items-center gap-2">
+          <span className="text-xl">{icon}</span>
+          <h5 className="font-semibold text-white text-sm">{name}</h5>
+        </div>
+      </div>
+      <div className="p-3">
+        <p className="text-xs text-slate-500 mb-2">{description}</p>
+        <ul className="space-y-1 mb-2">
+          {tasks.map((task, i) => (
+            <li key={i} className="text-[10px] text-slate-600 flex items-center gap-1">
+              <span className="w-1 h-1 rounded-full bg-slate-400" />
+              {task}
+            </li>
+          ))}
+        </ul>
+        <div className="pt-2 border-t border-slate-100">
+          <span className="text-[9px] text-slate-400 font-mono">{model}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Infrastructure Card Component
+function InfraCard({ 
+  icon, 
+  label, 
+  detail 
+}: { 
+  icon: React.ReactNode
+  label: string
+  detail: string
+}) {
+  return (
+    <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+      <div className="flex items-center gap-2 mb-1 text-slate-600">
+        {icon}
+        <span className="text-xs font-medium">{label}</span>
+      </div>
+      <p className="text-[10px] text-slate-400">{detail}</p>
     </div>
   )
 }

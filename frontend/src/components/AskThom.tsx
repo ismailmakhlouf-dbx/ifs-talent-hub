@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { X, Send, Sparkles, MessageCircle, Minimize2, Maximize2, Square } from 'lucide-react'
 import clsx from 'clsx'
+import { usePageContext } from '../contexts/PageContext'
 
 // Expansion mode type: normal (default), expanded (larger), full (fullscreen)
 type ExpansionMode = 'normal' | 'expanded' | 'full'
@@ -279,6 +280,35 @@ export function AskThomChat({ context, contextData, onClose }: AskThomChatProps)
   const [isMinimized, setIsMinimized] = useState(false)
   const [expansionMode, setExpansionMode] = useState<ExpansionMode>('normal')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  
+  // Track the last context to detect page changes
+  const lastContextRef = useRef<string | null>(null)
+  
+  // Get the global page context
+  const { currentPageData } = usePageContext()
+  
+  // Reset messages when the page/person being viewed changes
+  useEffect(() => {
+    const currentPerson = currentPageData?.currentlyViewingEmployee || 
+                          currentPageData?.currentlyViewingCandidate || 
+                          currentPageData?.pageName || 
+                          context
+    
+    if (lastContextRef.current !== null && lastContextRef.current !== currentPerson) {
+      // Context changed - reset messages
+      console.log('AskThom: Context changed, resetting messages', {
+        from: lastContextRef.current,
+        to: currentPerson
+      })
+      setMessages([{
+        role: 'assistant',
+        content: getInitialMessage(context),
+        timestamp: new Date()
+      }])
+    }
+    
+    lastContextRef.current = currentPerson
+  }, [currentPageData?.currentlyViewingEmployee, currentPageData?.currentlyViewingCandidate, currentPageData?.pageName, context])
 
   // Cycle through expansion modes
   const cycleExpansion = () => {
@@ -333,14 +363,30 @@ export function AskThomChat({ context, contextData, onClose }: AskThomChatProps)
     setIsLoading(true)
 
     try {
-      // Call the AskThom API
+      // Merge global page context with local contextData
+      // Local contextData takes precedence
+      const mergedContext = {
+        ...(currentPageData || {}),
+        ...(contextData || {}),
+        localContext: context  // The component-level context label
+      }
+
+      // Debug: Log the context being sent
+      console.log('AskThom sending context:', {
+        currentPageData,
+        contextData,
+        mergedContext,
+        hasCurrentlyViewing: currentPageData?.currentlyViewingEmployee || currentPageData?.currentlyViewingCandidate
+      })
+
+      // Call the AskThom API with the merged context object
       const response = await fetch(`${API_BASE}/api/ai/ask-thom`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question,
-          context: contextData ? JSON.stringify(contextData) : undefined,
-          page_context: context
+          context: Object.keys(mergedContext).length > 0 ? mergedContext : undefined,
+          page_context: currentPageData?.pageName || context
         })
       })
 
@@ -404,7 +450,22 @@ export function AskThomChat({ context, contextData, onClose }: AskThomChatProps)
               <ThomasHexagonLogo className="w-8 h-8" color="#FFFFFF" />
               <div>
                 <h3 className="font-display font-bold text-white">Ask Thom</h3>
-                <p className="text-white/80 text-xs">Powered by Thomas International + Databricks AI</p>
+                {/* Show context indicator */}
+                {currentPageData?.currentlyViewingEmployee ? (
+                  <p className="text-white/90 text-xs">
+                    📋 Viewing: <span className="font-semibold">{currentPageData.currentlyViewingEmployee}</span>
+                  </p>
+                ) : currentPageData?.currentlyViewingCandidate ? (
+                  <p className="text-white/90 text-xs">
+                    👤 Candidate: <span className="font-semibold">{currentPageData.currentlyViewingCandidate}</span>
+                  </p>
+                ) : currentPageData?.pageName ? (
+                  <p className="text-white/80 text-xs">
+                    {currentPageData.pageName}
+                  </p>
+                ) : (
+                  <p className="text-white/80 text-xs">Powered by Thomas International + Databricks AI</p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -681,6 +742,60 @@ function generateResponse(input: string, context: string, _contextData?: Record<
   
   // Generic contextual response
   return `That's a great question about ${context.replace('-', ' ')}. Based on the Thomas assessment data and best practices:\n\n• Consider the specific trait scores and how they interact\n• Compare against benchmarks (both industry and internal)\n• Factor in the context - role requirements, team dynamics, and timeline\n\nWould you like me to focus on a specific aspect? I can provide more detailed guidance on any element of the analysis.`
+}
+
+// =====================================
+// FLOATING ASKTHOM BUTTON (Global)
+// =====================================
+// This component renders a fixed floating button in the bottom-right corner
+// that opens the AskThom chat from anywhere in the app.
+// =====================================
+
+export function AskThomFloatingButton() {
+  const [isOpen, setIsOpen] = useState(false)
+  const { currentPageData } = usePageContext()
+
+  // Debug: log context changes
+  useEffect(() => {
+    console.log('AskThomFloatingButton: currentPageData changed:', currentPageData)
+  }, [currentPageData])
+
+  return (
+    <>
+      {/* Floating button - always visible in bottom right with high z-index */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-6 right-6 z-[9999] w-16 h-16 bg-gradient-to-br from-thomas-orange to-thomas-pink text-white rounded-full shadow-2xl hover:shadow-xl hover:scale-110 transition-all duration-300 flex items-center justify-center group animate-pulse-slow"
+          title={currentPageData?.currentlyViewingEmployee 
+            ? `Ask about ${currentPageData.currentlyViewingEmployee}` 
+            : currentPageData?.currentlyViewingCandidate 
+            ? `Ask about ${currentPageData.currentlyViewingCandidate}` 
+            : 'Ask Thom'}
+          style={{
+            boxShadow: '0 6px 30px rgba(255, 107, 53, 0.5)'
+          }}
+        >
+          <div className="relative">
+            <ThomasHexagonLogo className="w-8 h-8" color="#FFFFFF" />
+            <FourPointStar 
+              className="absolute -top-1 -right-1 w-4 h-4 ai-star-animate" 
+              animate 
+            />
+          </div>
+        </button>
+      )}
+
+      {/* Chat window */}
+      {isOpen && (
+        <AskThomChat 
+          context={currentPageData?.pageName || 'default'} 
+          contextData={currentPageData ? { ...currentPageData } : undefined}
+          onClose={() => setIsOpen(false)} 
+        />
+      )}
+    </>
+  )
 }
 
 export default AskThomBadge

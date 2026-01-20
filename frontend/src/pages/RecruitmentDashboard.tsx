@@ -17,7 +17,8 @@ import {
   Clock,
   TrendingUp
 } from 'lucide-react'
-import { recruitmentApi, aiApi, DashboardStats, Role, Candidate, IdealProfile, SimilarEmployee, PsychometricAnalysis, NegotiationAdvice } from '../lib/api'
+import { recruitmentApi, aiApi, DashboardStats, Role, Candidate, IdealProfile, SimilarEmployee, PsychometricAnalysis, NegotiationAdvice, getSalaryFormatter } from '../lib/api'
+import { usePageContext } from '../contexts/PageContext'
 import MetricCard from '../components/MetricCard'
 import { PPARadarChart, HPTIBarChart, PipelineFunnelChart } from '../components/Charts'
 import { AskThomBadge } from '../components/AskThom'
@@ -63,7 +64,7 @@ function NegotiationCoachView({
     }
   }
 
-  const currency = selectedCandidate?.currency_symbol || '£'
+  const formatCandidateSalary = selectedCandidate ? getSalaryFormatter(selectedCandidate) : (v: number) => `£${v.toLocaleString()}`
   const minSalary = selectedCandidate?.min_salary || 50000
   const maxSalary = selectedCandidate?.max_salary || 150000
   const midSalary = Math.round((minSalary + maxSalary) / 2)
@@ -125,7 +126,7 @@ function NegotiationCoachView({
                 </div>
                 <div>
                   <span className="text-slate-500">Expected Salary:</span>
-                  <span className="font-bold text-thomas-slate ml-2">{currency}{selectedCandidate.expected_salary.toLocaleString()}</span>
+                  <span className="font-bold text-thomas-slate ml-2">{formatCandidateSalary(selectedCandidate.expected_salary)}</span>
                 </div>
                 <div>
                   <span className="text-slate-500">Flexibility:</span>
@@ -154,12 +155,12 @@ function NegotiationCoachView({
                   />
                 </div>
                 <div className="flex justify-between text-xs text-slate-400 mb-2">
-                  <span>Min: {currency}{Math.round(minSalary * 0.85).toLocaleString()}</span>
-                  <span>Mid: {currency}{midSalary.toLocaleString()}</span>
-                  <span>Max: {currency}{Math.round(maxSalary * 1.15).toLocaleString()}</span>
+                  <span>Min: {formatCandidateSalary(Math.round(minSalary * 0.85))}</span>
+                  <span>Mid: {formatCandidateSalary(midSalary)}</span>
+                  <span>Max: {formatCandidateSalary(Math.round(maxSalary * 1.15))}</span>
                 </div>
                 <div className="text-center">
-                  <span className="text-3xl font-display font-bold text-thomas-slate">{currency}{proposedTc.toLocaleString()}</span>
+                  <span className="text-3xl font-display font-bold text-thomas-slate">{formatCandidateSalary(proposedTc)}</span>
                 </div>
               </div>
 
@@ -170,7 +171,7 @@ function NegotiationCoachView({
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-slate-50 rounded-xl p-3">
                       <p className="text-xs text-slate-500 mb-1">Industry Average</p>
-                      <p className="font-bold text-slate-700">{currency}{selectedCandidate.industry_avg_salary?.toLocaleString()}</p>
+                      <p className="font-bold text-slate-700">{formatCandidateSalary(selectedCandidate.industry_avg_salary || 0)}</p>
                       <p className={clsx(
                         'text-xs font-medium mt-1',
                         proposedTc > selectedCandidate.industry_avg_salary! ? 'text-success' : proposedTc < selectedCandidate.industry_avg_salary! ? 'text-danger' : 'text-slate-500'
@@ -182,7 +183,7 @@ function NegotiationCoachView({
                     </div>
                     <div className="bg-slate-50 rounded-xl p-3">
                       <p className="text-xs text-slate-500 mb-1">Company Average</p>
-                      <p className="font-bold text-slate-700">{currency}{selectedCandidate.company_avg_salary?.toLocaleString()}</p>
+                      <p className="font-bold text-slate-700">{formatCandidateSalary(selectedCandidate.company_avg_salary || 0)}</p>
                       <p className={clsx(
                         'text-xs font-medium mt-1',
                         proposedTc > selectedCandidate.company_avg_salary! ? 'text-success' : proposedTc < selectedCandidate.company_avg_salary! ? 'text-danger' : 'text-slate-500'
@@ -241,7 +242,7 @@ function NegotiationCoachView({
                     {advice.advice.likelihood}%
                   </span>
                   <div className="flex-1">
-                    <p className="text-white/80">at {currency}{proposedTc.toLocaleString()} TC</p>
+                    <p className="text-white/80">at {formatCandidateSalary(proposedTc)} TC</p>
                     <p className="text-white/50 text-sm mt-1">
                       {advice.advice.likelihood >= 70 ? 'High chance of acceptance' : 
                        advice.advice.likelihood >= 50 ? 'Moderate chance - may need sweeteners' : 
@@ -342,6 +343,7 @@ interface Props {
 
 export default function RecruitmentDashboard({ managerId }: Props) {
   const navigate = useNavigate()
+  const { setPageContext } = usePageContext()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [roles, setRoles] = useState<Role[]>([])
   const [candidates, setCandidates] = useState<Candidate[]>([])
@@ -356,6 +358,32 @@ export default function RecruitmentDashboard({ managerId }: Props) {
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null)
   const [psychometricAnalysis, setPsychometricAnalysis] = useState<PsychometricAnalysis | null>(null)
   const [analysisLoading, setAnalysisLoading] = useState(false)
+
+  // Salary formatter for the selected candidate
+  const formatSalaryForCandidate = selectedCandidate ? getSalaryFormatter(selectedCandidate) : (v: number) => `£${v.toLocaleString()}`
+
+  // Update page context for AskThom
+  useEffect(() => {
+    setPageContext({
+      pageName: 'Recruitment Dashboard',
+      pageDescription: 'Viewing open roles, candidates, and hiring pipeline',
+      openRoles: roles.length,
+      totalCandidates: candidates.length,
+      criticalRoles: roles.filter(r => r.priority === 'Critical').length,
+      selectedRole: selectedRole ? {
+        title: selectedRole.title,
+        department: selectedRole.department,
+        candidateCount: candidates.filter(c => c.role_id === selectedRole.role_id).length
+      } : null,
+      selectedCandidate: selectedCandidate ? {
+        name: selectedCandidate.name,
+        role: selectedCandidate.role_title,
+        stage: selectedCandidate.current_stage,
+        matchScore: selectedCandidate.match_score
+      } : null,
+      activeView
+    })
+  }, [roles, candidates, selectedRole, selectedCandidate, activeView, setPageContext])
 
   useEffect(() => {
     setLoading(true)
@@ -806,7 +834,7 @@ export default function RecruitmentDashboard({ managerId }: Props) {
                               <p className="text-xs text-slate-500">Match</p>
                             </div>
                             <div className="text-center">
-                              <p className="text-lg font-bold text-slate-700">${(candidate.expected_salary/1000).toFixed(0)}K</p>
+                              <p className="text-lg font-bold text-slate-700">{getSalaryFormatter(candidate)(candidate.expected_salary)}</p>
                               <p className="text-xs text-slate-500">Expected</p>
                             </div>
                             <ArrowRight className="w-4 h-4 text-slate-400" />
@@ -1072,7 +1100,7 @@ export default function RecruitmentDashboard({ managerId }: Props) {
                             <h4 className="text-lg font-display font-semibold text-slate-800 mb-3">Candidate Details</h4>
                             <div className="space-y-2 text-sm">
                               <p><span className="text-slate-500">Source:</span> <span className="font-medium text-slate-700">{selectedCandidate.source}</span></p>
-                              <p><span className="text-slate-500">Expected Salary:</span> <span className="font-bold text-slate-800">{selectedCandidate.currency_symbol || '$'}{selectedCandidate.expected_salary.toLocaleString()}</span></p>
+                              <p><span className="text-slate-500">Expected Salary:</span> <span className="font-bold text-slate-800">{formatSalaryForCandidate(selectedCandidate.expected_salary)}</span></p>
                               <p><span className="text-slate-500">Flexibility:</span> <span className="font-medium text-slate-700">{selectedCandidate.negotiation_flexibility}</span></p>
                             </div>
                             

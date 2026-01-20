@@ -330,4 +330,21 @@
   .text-ai-gradient {
     @apply bg-ai-gradient bg-clip-text text-transparent;
   }
+  
+  /* Slow pulse animation for floating button */
+  .animate-pulse-slow {
+    animation: pulse-slow 3s ease-in-out infinite;
+  }
+}
+
+/* Additional keyframes */
+@keyframes pulse-slow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 6px 30px rgba(255, 107, 53, 0.5);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 8px 40px rgba(255, 107, 53, 0.7);
+  }
 }

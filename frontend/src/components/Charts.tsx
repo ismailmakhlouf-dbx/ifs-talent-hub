@@ -272,7 +272,7 @@ export function ChurnDistributionChart({ data }: ChurnDistributionProps) {
   const chartData = [
     { name: 'Low Risk', value: data['Low'] || 0, fill: COLORS.success },
     { name: 'Medium Risk', value: data['Medium'] || 0, fill: COLORS.warning },
-    { name: 'High Risk', value: data['High'] || 0, fill: COLORS.accent },
+    { name: 'High Churn Risk', value: data['High'] || 0, fill: COLORS.accent },
   ].filter(d => d.value > 0)
 
   return (

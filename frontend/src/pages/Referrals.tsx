@@ -23,19 +23,39 @@ import {
 import { recruitmentApi, Referral, ReferralAIInsights } from '../lib/api'
 import { PPARadarChart } from '../components/Charts'
 import { ThomasProductLabel } from '../components/ThomasProductBadge'
-import { AskThomBadge, AskThomChat } from '../components/AskThom'
+import { AskThomBadge } from '../components/AskThom'
 import { PoweredByThomas, PoweredByInline } from '../components/PoweredByThomas'
 import { CVViewer } from '../components/CVViewer'
+import { usePageContext } from '../contexts/PageContext'
 import clsx from 'clsx'
 
 export default function Referrals() {
+  const { setPageContext } = usePageContext()
   const [referrals, setReferrals] = useState<Referral[]>([])
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null)
   const [aiInsights, setAiInsights] = useState<ReferralAIInsights | null>(null)
   const [loading, setLoading] = useState(true)
   const [extracting, setExtracting] = useState(false)
   const [showCVViewer, setShowCVViewer] = useState(false)
-  const [showAskThom, setShowAskThom] = useState(false)
+
+  // Update page context for AskThom
+  useEffect(() => {
+    setPageContext({
+      pageName: 'Referrals',
+      pageDescription: 'Managing candidate referrals with AI-powered CV analysis',
+      totalReferrals: referrals.length,
+      pendingReferrals: referrals.filter(r => r.status === 'New').length,
+      enrichedReferrals: referrals.filter(r => r.ai_enriched).length,
+      selectedReferral: selectedReferral ? {
+        name: selectedReferral.name,
+        role: selectedReferral.role_title,
+        company: selectedReferral.current_company,
+        yearsExperience: selectedReferral.years_experience,
+        hasAIInsights: !!aiInsights
+      } : null,
+      aiInsightsSummary: aiInsights?.ai_summary?.slice(0, 300) || null
+    })
+  }, [referrals, selectedReferral, aiInsights, setPageContext])
 
   useEffect(() => {
     recruitmentApi.getReferrals()
@@ -385,40 +405,6 @@ export default function Referrals() {
           referralId={selectedReferral.referral_id}
           candidateName={selectedReferral.name}
           onClose={() => setShowCVViewer(false)}
-        />
-      )}
-      
-      {/* Floating AskThom Button - Visible when candidate selected */}
-      {selectedReferral && !showAskThom && (
-        <button
-          onClick={() => setShowAskThom(true)}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-thomas-orange to-thomas-pink text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
-        >
-          <Sparkles className="w-5 h-5" />
-          Ask about {selectedReferral.name.split(' ')[0]}
-        </button>
-      )}
-      
-      {/* AskThom Chat */}
-      {showAskThom && selectedReferral && (
-        <AskThomChat
-          context="referral-candidate"
-          contextData={{
-            candidateName: selectedReferral.name,
-            role: selectedReferral.role_title,
-            company: selectedReferral.current_company,
-            yearsExperience: selectedReferral.years_experience,
-            skills: selectedReferral.skills,
-            status: selectedReferral.status,
-            aiInsights: aiInsights ? {
-              summary: aiInsights.ai_summary?.slice(0, 800),
-              predictedPPA: aiInsights.predicted_assessments?.ppa,
-              predictedGIA: aiInsights.predicted_assessments?.gia_estimated?.percentile,
-              skills: aiInsights.cv_insights?.skills,
-              linkedinHighlights: aiInsights.linkedin_insights?.activity_highlights,
-            } : undefined,
-          }}
-          onClose={() => setShowAskThom(false)}
         />
       )}
     </div>

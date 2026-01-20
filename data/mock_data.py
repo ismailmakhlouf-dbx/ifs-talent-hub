@@ -21,20 +21,22 @@ class MockDataGenerator:
     PPA_TRAITS = ["Dominance", "Influence", "Steadiness", "Compliance"]
     HPTI_TRAITS = ["Conscientiousness", "Adjustment", "Curiosity", "Risk_Approach", "Ambiguity_Acceptance", "Competitiveness"]
     
-    # Location definitions with currency - IFS Global Offices
+    # Location definitions with currency - IFS Global Offices (UK, US, Sweden)
+    # Currency display: GBP = "£60,000", USD = "$120,000", SEK = "720,000 SEK"
+    # Balanced mix of the 3 main regions
     LOCATIONS = [
-        # EMEA
-        {"city": "Linköping", "country": "Sweden", "currency": "SEK", "symbol": "kr", "cost_multiplier": 0.85},  # HQ
-        {"city": "Stockholm", "country": "Sweden", "currency": "SEK", "symbol": "kr", "cost_multiplier": 0.95},
-        {"city": "Staines", "country": "United Kingdom", "currency": "GBP", "symbol": "£", "cost_multiplier": 1.0},  # UK HQ
-        {"city": "London", "country": "United Kingdom", "currency": "GBP", "symbol": "£", "cost_multiplier": 1.05},
-        {"city": "Colombo", "country": "Sri Lanka", "currency": "LKR", "symbol": "Rs", "cost_multiplier": 0.25},  # Major R&D hub
-        # Americas
-        {"city": "Chicago", "country": "United States", "currency": "USD", "symbol": "$", "cost_multiplier": 1.25},
-        {"city": "Dallas", "country": "United States", "currency": "USD", "symbol": "$", "cost_multiplier": 1.15},
-        # APJ
-        {"city": "Sydney", "country": "Australia", "currency": "AUD", "symbol": "A$", "cost_multiplier": 1.10},
-        {"city": "Singapore", "country": "Singapore", "currency": "SGD", "symbol": "S$", "cost_multiplier": 1.20},
+        # United Kingdom - UK HQ and offices
+        {"city": "Staines", "country": "United Kingdom", "currency": "GBP", "symbol": "£", "symbol_position": "before", "salary_multiplier": 1.0},
+        {"city": "London", "country": "United Kingdom", "currency": "GBP", "symbol": "£", "symbol_position": "before", "salary_multiplier": 1.10},
+        {"city": "Manchester", "country": "United Kingdom", "currency": "GBP", "symbol": "£", "symbol_position": "before", "salary_multiplier": 0.92},
+        # Sweden - Global HQ
+        {"city": "Linköping", "country": "Sweden", "currency": "SEK", "symbol": "SEK", "symbol_position": "after", "salary_multiplier": 10.5},  # ~10.5 SEK per GBP
+        {"city": "Stockholm", "country": "Sweden", "currency": "SEK", "symbol": "SEK", "symbol_position": "after", "salary_multiplier": 11.2},
+        {"city": "Gothenburg", "country": "Sweden", "currency": "SEK", "symbol": "SEK", "symbol_position": "after", "salary_multiplier": 10.8},
+        # United States
+        {"city": "Chicago", "country": "United States", "currency": "USD", "symbol": "$", "symbol_position": "before", "salary_multiplier": 1.55},  # ~1.55x UK salary
+        {"city": "Dallas", "country": "United States", "currency": "USD", "symbol": "$", "symbol_position": "before", "salary_multiplier": 1.45},
+        {"city": "Atlanta", "country": "United States", "currency": "USD", "symbol": "$", "symbol_position": "before", "salary_multiplier": 1.40},
     ]
     
     # ===========================================
@@ -96,6 +98,62 @@ class MockDataGenerator:
         self._referrals = None
         self._referral_insights = {}
         self._bias_cache = {}
+        self._location_index = 0  # For round-robin location assignment
+    
+    # ========================================
+    # HELPER METHODS
+    # ========================================
+    
+    def _get_balanced_location(self):
+        """Get a location with balanced distribution across UK, Sweden, US"""
+        # Group locations by country
+        uk_locations = [loc for loc in self.LOCATIONS if loc["country"] == "United Kingdom"]
+        se_locations = [loc for loc in self.LOCATIONS if loc["country"] == "Sweden"]
+        us_locations = [loc for loc in self.LOCATIONS if loc["country"] == "United States"]
+        
+        # Round-robin through countries for balance
+        country_groups = [uk_locations, se_locations, us_locations]
+        selected_group = country_groups[self._location_index % 3]
+        self._location_index += 1
+        
+        return random.choice(selected_group)
+    
+    def _format_salary(self, base_salary_gbp: int, location: dict) -> tuple:
+        """
+        Convert GBP base salary to local currency and format correctly.
+        Returns (formatted_string, raw_value, currency, symbol)
+        
+        Formats:
+        - GBP: "£60,000"
+        - USD: "$120,000"
+        - SEK: "720,000 SEK"
+        """
+        multiplier = location.get("salary_multiplier", 1.0)
+        local_salary = int(base_salary_gbp * multiplier)
+        
+        # Round to nearest 1000 for cleaner numbers
+        local_salary = round(local_salary / 1000) * 1000
+        
+        currency = location["currency"]
+        symbol = location["symbol"]
+        symbol_position = location.get("symbol_position", "before")
+        
+        # Format with thousand separators
+        formatted_number = f"{local_salary:,}"
+        
+        if symbol_position == "after":
+            formatted = f"{formatted_number} {symbol}"
+        else:
+            formatted = f"{symbol}{formatted_number}"
+        
+        return formatted, local_salary, currency, symbol
+    
+    def _get_realistic_salary_range(self, base_min: int, base_max: int, location: dict) -> tuple:
+        """Get realistic salary range for a location"""
+        multiplier = location.get("salary_multiplier", 1.0)
+        local_min = round((base_min * multiplier) / 1000) * 1000
+        local_max = round((base_max * multiplier) / 1000) * 1000
+        return local_min, local_max
     
     # ========================================
     # EMPLOYEE DATA
@@ -267,135 +325,157 @@ class MockDataGenerator:
     # ========================================
     
     def generate_open_roles(self, n: int = 8) -> pd.DataFrame:
-        """Generate open roles with target hiring dates"""
+        """Generate open roles with target hiring dates - ensures every manager has roles"""
         if self._open_roles is not None:
             return self._open_roles
         
-        # Get managers organized by department
+        # Get all managers
         employees = self.generate_employees()
         managers = employees[employees["is_manager"] == True]
-        manager_by_dept = {}
-        for _, mgr in managers.iterrows():
-            dept = mgr["department"]
-            if dept not in manager_by_dept:
-                manager_by_dept[dept] = []
-            manager_by_dept[dept].append(mgr["employee_id"])
+        
+        # Create a mapping of departments to possible role titles
+        # Expand ROLES to cover all departments managers might have
+        dept_to_roles = {
+            "R&D": [
+                {"title": "Senior Cloud Engineer", "level": "L5", "base_salary": 85000, "max_salary": 120000, "industry_avg": 95000, "company_avg": 92000},
+                {"title": "Staff Platform Engineer", "level": "L6", "base_salary": 110000, "max_salary": 160000, "industry_avg": 125000, "company_avg": 118000},
+                {"title": "Principal Software Engineer", "level": "L7", "base_salary": 130000, "max_salary": 180000, "industry_avg": 145000, "company_avg": 140000},
+            ],
+            "Industrial AI": [
+                {"title": "Industrial AI Engineer", "level": "L5", "base_salary": 95000, "max_salary": 135000, "industry_avg": 105000, "company_avg": 100000},
+                {"title": "Senior AI/ML Engineer", "level": "L6", "base_salary": 115000, "max_salary": 165000, "industry_avg": 130000, "company_avg": 125000},
+            ],
+            "ERP": [
+                {"title": "ERP Solutions Architect", "level": "L5", "base_salary": 90000, "max_salary": 130000, "industry_avg": 100000, "company_avg": 95000},
+                {"title": "Senior ERP Consultant", "level": "L5", "base_salary": 80000, "max_salary": 115000, "industry_avg": 90000, "company_avg": 88000},
+            ],
+            "FSM": [
+                {"title": "Field Service Consultant", "level": "L4", "base_salary": 65000, "max_salary": 95000, "industry_avg": 75000, "company_avg": 72000},
+                {"title": "Senior FSM Developer", "level": "L5", "base_salary": 80000, "max_salary": 115000, "industry_avg": 90000, "company_avg": 88000},
+            ],
+            "EAM": [
+                {"title": "Asset Management Specialist", "level": "L4", "base_salary": 60000, "max_salary": 90000, "industry_avg": 70000, "company_avg": 68000},
+                {"title": "Senior Asset Management Consultant", "level": "L5", "base_salary": 75000, "max_salary": 105000, "industry_avg": 85000, "company_avg": 82000},
+            ],
+            "Sales": [
+                {"title": "Enterprise Account Executive", "level": "L5", "base_salary": 75000, "max_salary": 120000, "industry_avg": 85000, "company_avg": 82000},
+                {"title": "Senior Sales Engineer", "level": "L5", "base_salary": 85000, "max_salary": 125000, "industry_avg": 95000, "company_avg": 92000},
+            ],
+            "Customer Success": [
+                {"title": "Customer Success Manager", "level": "L4", "base_salary": 55000, "max_salary": 85000, "industry_avg": 65000, "company_avg": 62000},
+                {"title": "Senior Customer Success Manager", "level": "L5", "base_salary": 70000, "max_salary": 100000, "industry_avg": 80000, "company_avg": 78000},
+            ],
+        }
         
         roles = []
-        # Ensure some urgent roles (first 3 will be urgent)
-        urgent_distributions = [
-            (3, 7),    # 3-7 days - very urgent
-            (5, 10),   # 5-10 days - urgent
-            (8, 14),   # 8-14 days - approaching urgent
-        ]
+        role_counter = 0
         
-        for i in range(n):
-            role_template = random.choice(self.ROLES)
-            location = random.choice(self.LOCATIONS)
+        # Ensure every manager gets at least 2 roles, with 1 being Critical
+        for _, mgr in managers.iterrows():
+            manager_id = mgr["employee_id"]
+            dept = mgr["department"]
             
-            # Assign hiring manager from the same department
-            dept = role_template["department"]
-            if dept in manager_by_dept and manager_by_dept[dept]:
-                hiring_manager_id = random.choice(manager_by_dept[dept])
-            else:
-                # Fallback to any manager
-                hiring_manager_id = managers.iloc[random.randint(0, len(managers)-1)]["employee_id"]
+            # Get roles for this department
+            available_roles = dept_to_roles.get(dept, dept_to_roles["R&D"])  # Default to R&D if not found
             
-            # First 3 roles are urgent, rest are normal
-            if i < len(urgent_distributions):
-                min_days, max_days = urgent_distributions[i]
-                days_ahead = random.randint(min_days, max_days)
-            else:
-                days_ahead = random.randint(21, 90)
+            # Each manager gets 2-3 roles
+            num_roles_for_manager = random.randint(2, 3)
             
-            target_date = (datetime.now() + timedelta(days=days_ahead)).date()
-            days_until_target = days_ahead
-            
-            # Calculate milestones working backwards
-            offer_date = target_date - timedelta(days=7)
-            final_round_date = offer_date - timedelta(days=10)
-            onsite_date = final_round_date - timedelta(days=14)
-            tech_assessment_date = onsite_date - timedelta(days=10)
-            phone_interview_date = tech_assessment_date - timedelta(days=7)
-            
-            # Calculate milestone statuses based on current date
-            today = datetime.now().date()
-            
-            def get_milestone_status(milestone_date, candidates_at_stage):
-                if milestone_date < today:
-                    return "completed" if candidates_at_stage > 0 else "missed"
-                elif (milestone_date - today).days <= 3:
-                    return "at_risk" if candidates_at_stage < 2 else "on_track"
+            for j in range(num_roles_for_manager):
+                role_template = available_roles[j % len(available_roles)]
+                location = self._get_balanced_location()
+                
+                # First role for each manager is Critical, second is High, rest are random
+                if j == 0:
+                    days_ahead = random.randint(3, 7)  # Critical - very urgent
+                    priority = "Critical"
+                elif j == 1:
+                    days_ahead = random.randint(8, 14)  # High priority
+                    priority = "High"
                 else:
-                    return "upcoming"
+                    days_ahead = random.randint(21, 60)
+                    priority = random.choice(["Medium", "Low"])
             
-            # Simulate candidates at each stage
-            candidates_phone = random.randint(3, 8)
-            candidates_tech = random.randint(2, 5)
-            candidates_onsite = random.randint(1, 4)
-            candidates_final = random.randint(0, 2)
-            candidates_offer = random.randint(0, 1)
-            
-            # Adjust salaries based on location
-            cost_mult = location["cost_multiplier"]
-            base_salary = int(role_template["base_salary"] * cost_mult)
-            max_salary = int(role_template["max_salary"] * cost_mult)
-            industry_avg = int(role_template["industry_avg"] * cost_mult)
-            company_avg = int(role_template["company_avg"] * cost_mult)
-            
-            # Set priority based on urgency
-            if days_until_target <= 7:
-                priority = "Critical"
-            elif days_until_target <= 14:
-                priority = "High"
-            elif days_until_target <= 30:
-                priority = random.choice(["High", "Medium"])
-            else:
-                priority = random.choice(["Medium", "Low"])
-            
-            roles.append({
-                "role_id": f"REQ-{2024000 + i}",
-                "title": role_template["title"],
-                "department": role_template["department"],
-                "level": role_template["level"],
-                "hiring_manager_id": hiring_manager_id,
-                "status": "Open",
-                "priority": priority,
-                "target_hire_date": target_date,
-                "days_until_target": days_until_target,
-                "is_urgent": days_until_target <= 14,
-                # Milestones with dates and status
-                "target_offer_date": offer_date,
-                "target_final_round": final_round_date,
-                "target_onsite": onsite_date,
-                "target_tech_assessment": tech_assessment_date,
-                "target_phone_interview": phone_interview_date,
-                # Milestone statuses
-                "milestone_phone_status": get_milestone_status(phone_interview_date, candidates_phone),
-                "milestone_tech_status": get_milestone_status(tech_assessment_date, candidates_tech),
-                "milestone_onsite_status": get_milestone_status(onsite_date, candidates_onsite),
-                "milestone_final_status": get_milestone_status(final_round_date, candidates_final),
-                "milestone_offer_status": get_milestone_status(offer_date, candidates_offer),
-                # Candidates at each stage
-                "candidates_phone": candidates_phone,
-                "candidates_tech": candidates_tech,
-                "candidates_onsite": candidates_onsite,
-                "candidates_final": candidates_final,
-                "candidates_offer": candidates_offer,
-                # Location info
-                "city": location["city"],
-                "country": location["country"],
-                "currency": location["currency"],
-                "currency_symbol": location["symbol"],
-                # Salary info
-                "min_salary": base_salary,
-                "max_salary": max_salary,
-                "industry_avg_salary": industry_avg,
-                "company_avg_salary": company_avg,
-                "required_interviews_per_week": max(3, (25 - days_until_target // 5)),
-                "current_pipeline_count": candidates_phone + candidates_tech + candidates_onsite + candidates_final + candidates_offer,
-                "created_date": (datetime.now() - timedelta(days=random.randint(7, 60))).date(),
-            })
+                target_date = (datetime.now() + timedelta(days=days_ahead)).date()
+                days_until_target = days_ahead
+                
+                # Calculate milestones working backwards
+                offer_date = target_date - timedelta(days=7)
+                final_round_date = offer_date - timedelta(days=10)
+                onsite_date = final_round_date - timedelta(days=14)
+                tech_assessment_date = onsite_date - timedelta(days=10)
+                phone_interview_date = tech_assessment_date - timedelta(days=7)
+                
+                # Calculate milestone statuses based on current date
+                today = datetime.now().date()
+                
+                def get_milestone_status(milestone_date, candidates_at_stage):
+                    if milestone_date < today:
+                        return "completed" if candidates_at_stage > 0 else "missed"
+                    elif (milestone_date - today).days <= 3:
+                        return "at_risk" if candidates_at_stage < 2 else "on_track"
+                    else:
+                        return "upcoming"
+                
+                # Simulate candidates at each stage
+                candidates_phone = random.randint(3, 8)
+                candidates_tech = random.randint(2, 5)
+                candidates_onsite = random.randint(1, 4)
+                candidates_final = random.randint(0, 2)
+                candidates_offer = random.randint(0, 1)
+                
+                # Adjust salaries based on location using salary_multiplier
+                salary_mult = location.get("salary_multiplier", 1.0)
+                base_salary = round((role_template["base_salary"] * salary_mult) / 1000) * 1000
+                max_salary = round((role_template["max_salary"] * salary_mult) / 1000) * 1000
+                industry_avg = round((role_template["industry_avg"] * salary_mult) / 1000) * 1000
+                company_avg = round((role_template["company_avg"] * salary_mult) / 1000) * 1000
+                
+                roles.append({
+                    "role_id": f"REQ-{2024000 + role_counter}",
+                    "title": role_template["title"],
+                    "department": dept,
+                    "level": role_template["level"],
+                    "hiring_manager_id": manager_id,
+                    "status": "Open",
+                    "priority": priority,
+                    "target_hire_date": target_date,
+                    "days_until_target": days_until_target,
+                    "is_urgent": days_until_target <= 14,
+                    # Milestones with dates and status
+                    "target_offer_date": offer_date,
+                    "target_final_round": final_round_date,
+                    "target_onsite": onsite_date,
+                    "target_tech_assessment": tech_assessment_date,
+                    "target_phone_interview": phone_interview_date,
+                    # Milestone statuses
+                    "milestone_phone_status": get_milestone_status(phone_interview_date, candidates_phone),
+                    "milestone_tech_status": get_milestone_status(tech_assessment_date, candidates_tech),
+                    "milestone_onsite_status": get_milestone_status(onsite_date, candidates_onsite),
+                    "milestone_final_status": get_milestone_status(final_round_date, candidates_final),
+                    "milestone_offer_status": get_milestone_status(offer_date, candidates_offer),
+                    # Candidates at each stage
+                    "candidates_phone": candidates_phone,
+                    "candidates_tech": candidates_tech,
+                    "candidates_onsite": candidates_onsite,
+                    "candidates_final": candidates_final,
+                    "candidates_offer": candidates_offer,
+                    # Location info
+                    "city": location["city"],
+                    "country": location["country"],
+                    "currency": location["currency"],
+                    "currency_symbol": location["symbol"],
+                    "symbol_position": location.get("symbol_position", "before"),
+                    # Salary info (formatted for display)
+                    "min_salary": base_salary,
+                    "max_salary": max_salary,
+                    "industry_avg_salary": industry_avg,
+                    "company_avg_salary": company_avg,
+                    "required_interviews_per_week": max(3, (25 - days_until_target // 5)),
+                    "current_pipeline_count": candidates_phone + candidates_tech + candidates_onsite + candidates_final + candidates_offer,
+                    "created_date": (datetime.now() - timedelta(days=random.randint(7, 60))).date(),
+                })
+                role_counter += 1
         
         self._open_roles = pd.DataFrame(roles)
         return self._open_roles
@@ -464,8 +544,9 @@ class MockDataGenerator:
                 "country": role.get("country", "United Kingdom"),
                 "currency": role.get("currency", "GBP"),
                 "currency_symbol": role.get("currency_symbol", "£"),
-                # Salary info
-                "expected_salary": random.randint(int(role["min_salary"]), int(role["max_salary"])),
+                "symbol_position": role.get("symbol_position", "before"),
+                # Salary info (rounded to nearest 1000)
+                "expected_salary": round(random.randint(int(role["min_salary"]), int(role["max_salary"])) / 1000) * 1000,
                 "min_salary": int(role["min_salary"]),
                 "max_salary": int(role["max_salary"]),
                 "industry_avg_salary": int(role.get("industry_avg_salary", role["min_salary"] * 1.1)),
@@ -1133,7 +1214,8 @@ class MockDataGenerator:
         for i in range(n):
             role = open_roles.sample(1).iloc[0]
             referrer = employees.sample(1).iloc[0]
-            location = random.choice(self.LOCATIONS)
+            # Balanced mix: ~33% UK, ~33% Sweden, ~33% US
+            location = self._get_balanced_location()
             
             # Basic metadata (some fields intentionally sparse - to be filled by AI)
             name = fake.name()

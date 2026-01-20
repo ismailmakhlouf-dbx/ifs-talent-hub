@@ -17,6 +17,9 @@ export default {
           orange: '#FF6B35',           // Primary Action Color
           'orange-dark': '#E55A2B',    // Hover state
           'orange-light': '#FF8F66',   // Light variant
+          teal: '#00A9A5',             // Thomas Teal - Secondary accent
+          'teal-dark': '#008B87',      // Darker teal
+          'teal-light': '#4DC9C5',     // Lighter teal
           pink: '#E91E63',             // AI Highlights / Magenta
           'pink-dark': '#C2185B',      // Darker pink
           'pink-light': '#F06292',     // Lighter pink
@@ -29,6 +32,13 @@ export default {
           'navy-dark': '#141D29',      // Darker navy for dropdowns
           cream: '#FEF7F2',            // Warm off-white
           coral: '#FF7849',            // Softer coral accent
+        },
+        
+        // IFS Brand Colors
+        ifs: {
+          purple: '#7B2D8E',           // IFS Purple
+          'purple-dark': '#5A1F68',
+          'purple-light': '#9B4DB0',
         },
         
         // Background Colors

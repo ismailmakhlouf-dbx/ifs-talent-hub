@@ -11,7 +11,7 @@ import {
   Save,
   Users
 } from 'lucide-react'
-import { recruitmentApi, aiApi, CandidateDetails, AnalyticsDefault, NegotiationAdvice, BiasPitfallsResponse, CandidateInsightsResponse } from '../lib/api'
+import { recruitmentApi, aiApi, CandidateDetails, AnalyticsDefault, NegotiationAdvice, BiasPitfallsResponse, CandidateInsightsResponse, getSalaryFormatter } from '../lib/api'
 import { PPARadarChart, HPTIBarChart, LikelihoodGauge } from '../components/Charts'
 import { ConfidenceBadge } from '../components/StatusBadge'
 import ProgressBar from '../components/ProgressBar'
@@ -20,11 +20,13 @@ import { ThomasProductLabel } from '../components/ThomasProductBadge'
 import { PoweredByThomas, PoweredByInline } from '../components/PoweredByThomas'
 import { BiasPitfallsView, BiasBadge } from '../components/BiasPitfalls'
 import { CandidateInsightsView, InsightsSummaryBadge } from '../components/CandidateInsights'
+import { usePageContext } from '../contexts/PageContext'
 import clsx from 'clsx'
 
 export default function CandidateDetail() {
   const { candidateId } = useParams()
   const navigate = useNavigate()
+  const { setPageContext } = usePageContext()
   const [data, setData] = useState<CandidateDetails | null>(null)
   const [defaults, setDefaults] = useState<AnalyticsDefault[]>([])
   const [interactionSummary, setInteractionSummary] = useState<string | null>(null)
@@ -48,6 +50,42 @@ export default function CandidateDetail() {
     gia: 0.15,
     hpti: 0.15,
   })
+
+  // Update page context for AskThom - include full candidate details
+  useEffect(() => {
+    if (data) {
+      setPageContext({
+        pageName: 'Candidate Detail',
+        pageDescription: `Currently viewing the profile of candidate ${data.candidate.name}`,
+        // Explicitly state who the user is viewing
+        currentlyViewingCandidate: data.candidate.name,
+        candidateId: data.candidate.candidate_id,
+        candidate: {
+          id: data.candidate.candidate_id,
+          fullName: data.candidate.name,
+          role: data.candidate.role_title,
+          stage: data.candidate.current_stage,
+          matchScore: data.candidate.match_score,
+          expectedSalary: data.candidate.expected_salary,
+          city: data.candidate.city,
+          country: data.candidate.country,
+          source: data.candidate.source,
+          negotiationFlexibility: data.candidate.negotiation_flexibility,
+          ppa: {
+            dominance: data.candidate.ppa_dominance,
+            influence: data.candidate.ppa_influence,
+            steadiness: data.candidate.ppa_steadiness,
+            compliance: data.candidate.ppa_compliance
+          },
+          giaScore: data.candidate.gia_score
+        },
+        activeTab,
+        interactionSummary: interactionSummary?.slice(0, 300) || null,
+        biasPitfallsCount: biasPitfalls?.pitfalls?.length || 0,
+        insightsHighlights: candidateInsights?.highlights?.length || 0
+      })
+    }
+  }, [data, activeTab, interactionSummary, biasPitfalls, candidateInsights, setPageContext])
 
   useEffect(() => {
     if (!candidateId) return
@@ -223,7 +261,7 @@ export default function CandidateDetail() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-slate-500">Expected Salary</span>
-                    <span className="font-semibold text-slate-800">${candidate.expected_salary.toLocaleString()}</span>
+                    <span className="font-semibold text-slate-800">{getSalaryFormatter(candidate)(candidate.expected_salary)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500">Flexibility</span>
@@ -677,9 +715,9 @@ export default function CandidateDetail() {
                     className="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-thomas-orange"
                   />
                   <div className="flex justify-between mt-2">
-                    <span className="text-sm text-slate-500">${(candidate.expected_salary * 0.8).toLocaleString()}</span>
-                    <span className="text-2xl font-bold text-thomas-orange">${proposedTc.toLocaleString()}</span>
-                    <span className="text-sm text-slate-500">${(candidate.expected_salary * 1.3).toLocaleString()}</span>
+                    <span className="text-sm text-slate-500">{getSalaryFormatter(candidate)(Math.round(candidate.expected_salary * 0.8))}</span>
+                    <span className="text-2xl font-bold text-thomas-orange">{getSalaryFormatter(candidate)(proposedTc)}</span>
+                    <span className="text-sm text-slate-500">{getSalaryFormatter(candidate)(Math.round(candidate.expected_salary * 1.3))}</span>
                   </div>
                 </div>
 

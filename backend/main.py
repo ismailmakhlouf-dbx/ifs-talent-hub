@@ -6,10 +6,19 @@ Powered by Databricks + Thomas International
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from contextlib import asynccontextmanager
 import sys
 import os
+import logging
+import traceback
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -61,6 +70,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Global exception handler to prevent crashes
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Catch all unhandled exceptions to prevent app crashes"""
+    error_id = id(exc)
+    logger.error(f"Unhandled exception [{error_id}]: {type(exc).__name__}: {str(exc)}")
+    logger.error(f"Request: {request.method} {request.url}")
+    logger.error(traceback.format_exc())
+    
+    # Return a safe error response instead of crashing
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal server error",
+            "error_id": str(error_id),
+            "message": str(exc) if not is_local_mode() else f"{type(exc).__name__}: {str(exc)}",
+            "recovery": "The request failed but the application is still running. Please try again."
+        }
+    )
 
 # Include API routers
 app.include_router(recruitment.router, prefix="/api/recruitment", tags=["Recruitment"])

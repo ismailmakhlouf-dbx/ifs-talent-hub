@@ -18,17 +18,83 @@ import { AskThomBadge } from '../components/AskThom'
 import { EmployeeTeamCollaborationView } from '../components/TeamCollaboration'
 import { ThomasProductLabel } from '../components/ThomasProductBadge'
 import { PoweredByThomas, PoweredByInline } from '../components/PoweredByThomas'
+import { usePageContext } from '../contexts/PageContext'
 import clsx from 'clsx'
 
 export default function EmployeeDetail() {
   const { employeeId } = useParams()
   const navigate = useNavigate()
+  const { setPageContext } = usePageContext()
   const [data, setData] = useState<EmployeeDetails | null>(null)
   const [performanceSummary, setPerformanceSummary] = useState<PerformanceSummary | null>(null)
   const [leadershipPotential, setLeadershipPotential] = useState<LeadershipPotential | null>(null)
   const [churnRecommendation, setChurnRecommendation] = useState<ChurnRecommendation | null>(null)
   const [teamCollaboration, setTeamCollaboration] = useState<EmployeeTeamCollaboration | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Update page context for AskThom - include full employee details
+  useEffect(() => {
+    if (data) {
+      const latestPerf = data.performance_history.find(p => p.quarter === '2024-Q4')
+      const assessment = data.assessments[0]
+      
+      // Debug: Log that we're setting context
+      console.log('EmployeeDetail: Setting page context for', data.employee.name)
+      
+      setPageContext({
+        pageName: 'Employee Detail',
+        pageDescription: `Currently viewing the profile of ${data.employee.name}`,
+        // Explicitly state who the user is viewing
+        currentlyViewingEmployee: data.employee.name,
+        employeeId: data.employee.employee_id,
+        // Full employee details
+        employee: {
+          id: data.employee.employee_id,
+          fullName: data.employee.name,
+          title: data.employee.title,
+          department: data.employee.department,
+          location: data.employee.location,
+          tenureMonths: data.employee.tenure_months,
+          isManager: data.employee.is_manager
+        },
+        // Performance data
+        performance: {
+          score: latestPerf?.performance_score || null,
+          moraleScore: latestPerf?.morale_score || null,
+          churnRisk: latestPerf?.churn_risk || null,
+          quarter: latestPerf?.quarter || null,
+          slackSentiment: latestPerf?.slack_sentiment || null
+        },
+        // Psychometric assessments
+        thomasAssessments: assessment ? {
+          ppa: {
+            dominance: assessment.ppa_dominance,
+            influence: assessment.ppa_influence,
+            steadiness: assessment.ppa_steadiness,
+            compliance: assessment.ppa_compliance
+          },
+          gia: assessment.gia_overall,
+          hpti: {
+            conscientiousness: assessment.hpti_conscientiousness,
+            adjustment: assessment.hpti_adjustment,
+            curiosity: assessment.hpti_curiosity,
+            riskApproach: assessment.hpti_risk_approach,
+            ambiguityAcceptance: assessment.hpti_ambiguity_acceptance,
+            competitiveness: assessment.hpti_competitiveness
+          }
+        } : null,
+        // Leadership & team data
+        leadershipReadiness: leadershipPotential?.prediction?.readiness_score || null,
+        recommendedNextRole: leadershipPotential?.prediction?.recommended_role || null,
+        teamCollaboration: teamCollaboration ? {
+          avgChemistryScore: teamCollaboration.summary?.avg_chemistry_score,
+          avgRelationshipScore: teamCollaboration.summary?.avg_relationship_score,
+          collaboratorsCount: teamCollaboration.summary?.total_collaborators,
+          interpersonalFlexibility: teamCollaboration.interpersonal_flexibility?.score
+        } : null
+      })
+    }
+  }, [data, leadershipPotential, teamCollaboration, setPageContext])
 
   useEffect(() => {
     if (!employeeId) return

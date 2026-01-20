@@ -13,6 +13,8 @@ import math
 
 def clean_numpy_types(obj):
     """Convert numpy types to Python native types for JSON serialization"""
+    if obj is None:
+        return None
     if isinstance(obj, dict):
         return {k: clean_numpy_types(v) for k, v in obj.items()}
     elif isinstance(obj, list):
@@ -20,7 +22,7 @@ def clean_numpy_types(obj):
     elif isinstance(obj, (np.integer,)):
         return int(obj)
     elif isinstance(obj, (np.floating,)):
-        if math.isnan(obj) or math.isinf(obj):
+        if np.isnan(obj) or np.isinf(obj):
             return None
         return float(obj)
     elif isinstance(obj, np.ndarray):
@@ -29,6 +31,9 @@ def clean_numpy_types(obj):
         if math.isnan(obj) or math.isinf(obj):
             return None
         return obj
+    # Handle pandas NA/NaT values
+    elif pd.isna(obj):
+        return None
     return obj
 
 import sys
@@ -799,8 +804,8 @@ async def get_candidate_insights(candidate_id: str):
 
 class AskThomRequest(BaseModel):
     question: str
-    context: Optional[str] = None
-    page_context: Optional[str] = None  # E.g., "recruitment_dashboard", "candidate_detail"
+    context: Optional[Dict[str, Any]] = None  # Universal page context - any JSON object
+    page_context: Optional[str] = None  # Legacy: page name string
 
 
 class AskThomResponse(BaseModel):
@@ -811,38 +816,103 @@ class AskThomResponse(BaseModel):
     sources: List[str]
 
 
+def get_thomas_trait_kw():
+    """Get Thomas trait keywords with fallback"""
+    try:
+        from backend.services.databricks_ai import get_thomas_trait_keywords
+        return get_thomas_trait_keywords()
+    except ImportError:
+        return ["Dominance", "Influence", "Steadiness", "Compliance"]
+
+
 def highlight_keywords(text: str) -> dict:
     """
     Parse text and identify Thomas and IFS keywords for frontend highlighting.
-    Returns the text with markers for highlighting.
+    Uses case-insensitive matching for product names, case-sensitive for traits.
     """
     import re
     
-    thomas_keywords = get_thomas_kw()
+    thomas_keywords = get_thomas_kw()  # Product names - case insensitive is OK
+    thomas_traits = get_thomas_trait_kw()  # Traits - need case-sensitive
     ifs_keywords = get_ifs_kw()
     
     found_thomas = []
     found_ifs = []
     
-    # Find all occurrences (case-insensitive matching)
+    # Case-insensitive for product names (but not for common words)
     text_lower = text.lower()
-    
     for keyword in thomas_keywords:
+        # Skip if it could match common verbs/nouns
+        if keyword.lower() in ["engage", "influence", "adjustment"]:
+            continue
         if keyword.lower() in text_lower:
             found_thomas.append(keyword)
     
+    # Case-SENSITIVE for trait keywords (only match when capitalized)
+    for trait in thomas_traits:
+        if trait in text:  # Case-sensitive check
+            found_thomas.append(trait)
+    
+    # IFS keywords - case insensitive
     for keyword in ifs_keywords:
         if keyword.lower() in text_lower:
             found_ifs.append(keyword)
     
-    # Don't modify the text with markers - just return found keywords
-    # The frontend will handle the highlighting
-    # This avoids issues with nested markers and markdown
     return {
-        "highlighted_text": text,  # Return original text
+        "highlighted_text": text,
         "thomas_keywords": list(set(found_thomas)),
         "ifs_keywords": list(set(found_ifs))
     }
+
+
+def build_context_prompt(context: Optional[Dict[str, Any]], page_context: Optional[str]) -> str:
+    """
+    Build a context string from the page context object.
+    Handles any JSON structure flexibly and emphasizes the current subject.
+    """
+    if not context and not page_context:
+        return ""
+    
+    parts = []
+    
+    if page_context:
+        parts.append(f"**Current Page**: {page_context}")
+    
+    if context:
+        # Check for explicit "currently viewing" indicators first
+        if context.get("currentlyViewingEmployee"):
+            parts.append(f"\n**The user is currently viewing the profile of: {context['currentlyViewingEmployee']}**")
+            parts.append("When the user refers to 'them', 'this person', 'her/him', or mentions a first name, they mean this employee.\n")
+        elif context.get("currentlyViewingCandidate"):
+            parts.append(f"\n**The user is currently viewing candidate: {context['currentlyViewingCandidate']}**")
+            parts.append("When the user refers to 'them', 'this person', 'this candidate', or mentions a first name, they mean this candidate.\n")
+        
+        # Format the context dict into readable text
+        parts.append("**Page Data**:")
+        for key, value in context.items():
+            if value is None:
+                continue
+            # Skip the "currently viewing" keys as we've handled them above
+            if key in ("currentlyViewingEmployee", "currentlyViewingCandidate"):
+                continue
+            # Format key nicely
+            formatted_key = key.replace("_", " ").replace("Id", "ID").title()
+            # Handle different value types
+            if isinstance(value, dict):
+                parts.append(f"  {formatted_key}:")
+                for k, v in value.items():
+                    if v is not None:
+                        k_formatted = k.replace("_", " ").title()
+                        parts.append(f"    - {k_formatted}: {v}")
+            elif isinstance(value, list):
+                if len(value) > 0:
+                    parts.append(f"  {formatted_key}: {', '.join(str(v) for v in value[:5])}")
+                    if len(value) > 5:
+                        parts.append(f"    (and {len(value) - 5} more...)")
+            else:
+                parts.append(f"  {formatted_key}: {value}")
+    
+    return "\n".join(parts)
 
 
 @router.post("/ask-thom", response_model=AskThomResponse)
@@ -850,28 +920,35 @@ async def ask_thom(request: AskThomRequest):
     """
     Ask Thom, the AI assistant powered by Thomas International insights and Databricks Gemini.
     
-    Thom is pre-loaded with:
-    - Thomas International product knowledge (PPA, GIA, HPTI, TEIQue, Chemistry, etc.)
-    - IFS Cloud enterprise context
-    - Application-specific context about this Talent Hub
-    
-    The response will highlight Thomas keywords in orange and IFS keywords in purple.
+    Accepts universal page context as a dict - AskThom will parse whatever keys exist.
     """
-    # Build context string
-    context_parts = []
+    import logging
+    logger = logging.getLogger(__name__)
     
-    if request.page_context:
-        context_parts.append(f"User is currently on: {request.page_context}")
+    # Log incoming context for debugging
+    logger.info(f"AskThom received context: {request.context}")
+    logger.info(f"AskThom page_context: {request.page_context}")
     
-    if request.context:
-        context_parts.append(request.context)
+    # Build context from the universal page context
+    context_str = build_context_prompt(request.context, request.page_context)
     
-    full_context = "\n".join(context_parts) if context_parts else None
+    logger.info(f"Built context prompt (first 500 chars): {context_str[:500] if context_str else 'empty'}")
+    
+    # Add instruction for concise responses
+    if context_str:
+        context_str = f"""CURRENT CONTEXT:
+{context_str}
+
+IMPORTANT: If the user asks about "them", "this person", "her/him", or uses a first name, they are referring to the person mentioned in the context above.
+
+RESPONSE STYLE: Be concise and direct. Use bullet points. Only elaborate if asked."""
+    else:
+        context_str = "RESPONSE STYLE: Be concise and direct. Use bullet points. Only elaborate if asked."
     
     # Call Databricks AI service (with fallback)
     ai_service = get_ai_service()
     if ai_service:
-        answer = ai_service.ask_thom(request.question, full_context)
+        answer = ai_service.ask_thom(request.question, context_str)
     else:
         # Fallback response when AI service is unavailable
         answer = generate_fallback_response(request.question)

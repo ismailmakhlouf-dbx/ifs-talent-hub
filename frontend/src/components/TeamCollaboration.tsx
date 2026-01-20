@@ -326,7 +326,7 @@ export function CandidateTeamCollaborationView({ data }: { data: CandidateTeamCo
           )}>
             {data.summary.high_risk_relationships}
           </p>
-          <p className="text-xs text-slate-500">High Risk</p>
+          <p className="text-xs text-slate-500">High Churn Risk</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
           <p className="text-2xl font-bold text-warning">{data.summary.low_chemistry_count}</p>

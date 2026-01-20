@@ -6,9 +6,17 @@ Handles connection to Databricks SQL Warehouse and AI endpoints
 import os
 from dataclasses import dataclass
 from typing import Optional
-from dotenv import load_dotenv
 
-load_dotenv()
+# Try to load .env file, but don't crash if it's not accessible
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except (PermissionError, OSError):
+    # .env file not accessible - use environment variables only
+    pass
+except ImportError:
+    # python-dotenv not installed
+    pass
 
 
 @dataclass
