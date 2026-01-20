@@ -10,11 +10,12 @@ from typing import Tuple, Dict, Any
 # FIXED EXCHANGE RATES (GBP as base currency)
 # ===========================================
 # All rates are: 1 GBP = X foreign currency
+# Rates as of January 20, 2026 (mid-market rates from Forbes/PoundSterlingLive)
 FX_RATES = {
-    "GBP": 1.0,      # Base currency
-    "USD": 1.27,     # 1 GBP = 1.27 USD
-    "SEK": 13.20,    # 1 GBP = 13.20 SEK
-    "EUR": 1.17,     # 1 GBP = 1.17 EUR (for future use)
+    "GBP": 1.0,       # Base currency
+    "USD": 1.34,      # 1 GBP = 1.34 USD (actual: ~1.341)
+    "SEK": 12.34,     # 1 GBP = 12.34 SEK (actual: ~12.338)
+    "EUR": 1.18,      # 1 GBP = 1.18 EUR (for future use)
 }
 
 # Currency display configuration
