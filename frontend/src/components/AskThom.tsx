@@ -755,9 +755,17 @@ export function AskThomFloatingButton() {
   const [isOpen, setIsOpen] = useState(false)
   const { currentPageData } = usePageContext()
 
-  // Debug: log context changes
+  // Only log significant context changes (not every re-render)
+  const lastPageRef = useRef<string | null>(null)
   useEffect(() => {
-    console.log('AskThomFloatingButton: currentPageData changed:', currentPageData)
+    const pageKey = currentPageData?.currentlyViewingEmployee || 
+                    currentPageData?.currentlyViewingCandidate || 
+                    currentPageData?.currentlyViewingReferral ||
+                    currentPageData?.pageName || 'none'
+    if (pageKey !== lastPageRef.current) {
+      console.log('AskThom: Viewing', pageKey)
+      lastPageRef.current = pageKey
+    }
   }, [currentPageData])
 
   return (

@@ -43,17 +43,32 @@ export default function Referrals() {
     setPageContext({
       pageName: 'Referrals',
       pageDescription: 'Managing candidate referrals with AI-powered CV analysis',
+      // KEY: This tells AskThom who we're currently viewing
+      currentlyViewingReferral: selectedReferral?.name || null,
+      currentlyViewingCandidate: selectedReferral?.name || null,  // Also set this for compatibility
       totalReferrals: referrals.length,
       pendingReferrals: referrals.filter(r => r.status === 'New').length,
       enrichedReferrals: referrals.filter(r => r.ai_enriched).length,
       selectedReferral: selectedReferral ? {
         name: selectedReferral.name,
         role: selectedReferral.role_title,
+        department: selectedReferral.department,
         company: selectedReferral.current_company,
+        title: selectedReferral.current_title,
         yearsExperience: selectedReferral.years_experience,
+        location: `${selectedReferral.city}, ${selectedReferral.country}`,
+        referredBy: selectedReferral.referred_by_name,
+        status: selectedReferral.status,
+        skills: selectedReferral.skills,
         hasAIInsights: !!aiInsights
       } : null,
-      aiInsightsSummary: aiInsights?.ai_summary?.slice(0, 300) || null
+      aiInsights: aiInsights ? {
+        summary: aiInsights.ai_summary,
+        predictedPPA: aiInsights.predicted_assessments?.ppa,
+        yearsExperience: aiInsights.cv_insights?.years_experience,
+        skills: aiInsights.cv_insights?.skills?.slice(0, 10),
+        previousCompanies: aiInsights.cv_insights?.previous_companies
+      } : null
     })
   }, [referrals, selectedReferral, aiInsights, setPageContext])
 

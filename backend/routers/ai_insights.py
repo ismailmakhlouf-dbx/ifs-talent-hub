@@ -881,11 +881,14 @@ def build_context_prompt(context: Optional[Dict[str, Any]], page_context: Option
     if context:
         # Check for explicit "currently viewing" indicators first
         if context.get("currentlyViewingEmployee"):
-            parts.append(f"\n**The user is currently viewing the profile of: {context['currentlyViewingEmployee']}**")
-            parts.append("When the user refers to 'them', 'this person', 'her/him', or mentions a first name, they mean this employee.\n")
+            parts.append(f"\n**IMPORTANT: The user is currently viewing the profile of employee: {context['currentlyViewingEmployee']}**")
+            parts.append("When the user refers to 'them', 'this person', 'her/him', uses a first name, or asks 'tell me about' without specifying, they mean this employee.\n")
+        elif context.get("currentlyViewingReferral"):
+            parts.append(f"\n**IMPORTANT: The user is currently viewing referral candidate: {context['currentlyViewingReferral']}**")
+            parts.append("When the user refers to 'them', 'this person', 'this referral', uses a first name, or asks 'tell me about' without specifying, they mean this referral.\n")
         elif context.get("currentlyViewingCandidate"):
-            parts.append(f"\n**The user is currently viewing candidate: {context['currentlyViewingCandidate']}**")
-            parts.append("When the user refers to 'them', 'this person', 'this candidate', or mentions a first name, they mean this candidate.\n")
+            parts.append(f"\n**IMPORTANT: The user is currently viewing candidate: {context['currentlyViewingCandidate']}**")
+            parts.append("When the user refers to 'them', 'this person', 'this candidate', uses a first name, or asks 'tell me about' without specifying, they mean this candidate.\n")
         
         # Format the context dict into readable text
         parts.append("**Page Data**:")

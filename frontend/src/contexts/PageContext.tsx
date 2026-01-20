@@ -25,14 +25,22 @@ export const PageContext = createContext<PageContextType | undefined>(undefined)
 export function PageContextProvider({ children }: { children: ReactNode }) {
   const [currentPageData, setCurrentPageData] = useState<PageContextData | null>(null)
 
+  // Ref to track if context has meaningfully changed (avoid spam)
+  const lastContextKey = React.useRef<string | null>(null)
+  
   const setPageContext = (data: PageContextData) => {
-    console.log('PageContext: Setting context -', {
-      pageName: data.pageName,
-      currentlyViewingEmployee: data.currentlyViewingEmployee,
-      currentlyViewingCandidate: data.currentlyViewingCandidate,
-      hasEmployeeData: !!data.employee,
-      hasPerformanceData: !!data.performance
-    })
+    // Create a key to identify meaningful changes
+    const contextKey = `${data.pageName}|${data.currentlyViewingEmployee || ''}|${data.currentlyViewingCandidate || ''}|${data.currentlyViewingReferral || ''}`
+    
+    // Only log and update if context meaningfully changed
+    if (contextKey !== lastContextKey.current) {
+      console.log('PageContext: Context changed -', {
+        pageName: data.pageName,
+        viewing: data.currentlyViewingEmployee || data.currentlyViewingCandidate || data.currentlyViewingReferral || 'none'
+      })
+      lastContextKey.current = contextKey
+    }
+    
     setCurrentPageData(data)
   }
 
