@@ -488,7 +488,8 @@ class MockDataGenerator:
                     "max_salary_local": max_salary_local,
                     "salary_multiplier": salary_mult,
                     "fx_rate": get_fx_rate(local_currency),
-                    "required_interviews_per_week": max(3, (25 - days_until_target // 5)),
+                    # Realistic interview targets: 2-6 per week depending on urgency
+                    "required_interviews_per_week": min(6, max(2, 7 - days_until_target // 10)),
                     "current_pipeline_count": candidates_phone + candidates_tech + candidates_onsite + candidates_final + candidates_offer,
                     "created_date": (datetime.now() - timedelta(days=random.randint(7, 60))).date(),
                 })
