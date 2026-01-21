@@ -35,8 +35,10 @@ export default function EmployeeDetail() {
   // Update page context for AskThom - include full employee details
   useEffect(() => {
     if (data) {
-      const latestPerf = data.performance_history.find(p => p.quarter === '2024-Q4')
-      const assessment = data.assessments[0]
+      const perfHistory = Array.isArray(data.performance_history) ? data.performance_history : []
+      const assessmentsList = Array.isArray(data.assessments) ? data.assessments : []
+      const latestPerf = perfHistory.find(p => p.quarter === '2024-Q4')
+      const assessment = assessmentsList[0]
       
       // Debug: Log that we're setting context
       console.log('EmployeeDetail: Setting page context for', data.employee.name)
@@ -84,7 +86,7 @@ export default function EmployeeDetail() {
           }
         } : null,
         // Leadership & team data - use the same value shown in the UI header
-        leadershipReadiness: data.performance_history.find(p => p.quarter === '2024-Q4')?.leadership_readiness || null,
+        leadershipReadiness: perfHistory.find(p => p.quarter === '2024-Q4')?.leadership_readiness || null,
         recommendedNextRole: leadershipPotential?.prediction?.recommended_role || null,
         teamCollaboration: teamCollaboration ? {
           avgChemistryScore: teamCollaboration.summary?.avg_chemistry_score,
@@ -112,7 +114,8 @@ export default function EmployeeDetail() {
         setTeamCollaboration(teamData)
         
         // Get churn recommendation if high risk
-        const latestPerf = employeeData.performance_history.find(p => p.quarter === '2024-Q4')
+        const empPerfHistory = Array.isArray(employeeData.performance_history) ? employeeData.performance_history : []
+        const latestPerf = empPerfHistory.find(p => p.quarter === '2024-Q4')
         if (latestPerf && ['High', 'Medium'].includes(latestPerf.churn_risk)) {
           aiApi.getChurnRecommendation(employeeId)
             .then(setChurnRecommendation)
@@ -135,7 +138,9 @@ export default function EmployeeDetail() {
     return <div className="p-8 text-center text-slate-500">Employee not found</div>
   }
 
-  const { employee, assessments, performance_history } = data
+  const { employee } = data
+  const assessments = Array.isArray(data.assessments) ? data.assessments : []
+  const performance_history = Array.isArray(data.performance_history) ? data.performance_history : []
   const latestPerformance = performance_history.find(p => p.quarter === '2024-Q4')
   const assessment = assessments[0]
 
