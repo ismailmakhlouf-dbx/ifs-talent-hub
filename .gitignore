@@ -48,8 +48,9 @@ env.local
 .databricks/
 *.log
 
-# Build artifacts (keep dist/ for deployment)
-# frontend/dist/ is needed for Databricks Apps
+# Build artifacts
+# Note: frontend/dist/ is explicitly tracked for Databricks Apps deployment
+!frontend/dist/
 
 # Test
 .coverage
