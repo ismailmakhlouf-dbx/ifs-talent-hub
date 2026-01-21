@@ -1,0 +1,33 @@
+# Databricks Asset Bundle Configuration
+# IFS Talent Hub - Powered by Thomas International
+# 
+# Deploy with: databricks bundle deploy
+# This will automatically rebuild the frontend before syncing
+
+bundle:
+  name: thomas-talent-hub
+
+# Pre-deploy hook to ensure frontend is always fresh
+# Note: Databricks CLI doesn't support hooks in app bundles yet
+# Use the deploy.sh script instead for automated builds
+
+include:
+  - app.yaml
+
+workspace:
+  host: ${DATABRICKS_HOST}
+
+# Sync configuration
+sync:
+  include:
+    - "**/*"
+  exclude:
+    - "node_modules/**"
+    - ".git/**"
+    - "__pycache__/**"
+    - "*.pyc"
+    - ".env"
+    - ".env.local"
+    - "env.local"
+    - ".venv/**"
+    - "venv/**"

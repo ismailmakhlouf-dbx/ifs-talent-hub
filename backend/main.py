@@ -8,35 +8,51 @@ import os
 
 # ============================================================================
 # ENVIRONMENT DETECTION - MUST BE AT THE VERY TOP BEFORE ANY OTHER IMPORTS
+# This block MUST run before config module loads to prevent .env shadowing
 # ============================================================================
 print("=" * 60)
 print("🔍 ENVIRONMENT CHECK AT STARTUP")
 print("=" * 60)
 
-# Check for Databricks Apps environment variables
+# Check ALL possible Databricks environment indicators
 _DATABRICKS_APP_NAME = os.getenv("DATABRICKS_APP_NAME")
 _DATABRICKS_APP_ID = os.getenv("DATABRICKS_APP_ID")
 _HOSTNAME = os.getenv("HOSTNAME", "")
+_CWD = os.getcwd()
 
 print(f"   DATABRICKS_APP_NAME: {_DATABRICKS_APP_NAME}")
 print(f"   DATABRICKS_APP_ID: {_DATABRICKS_APP_ID}")
 print(f"   HOSTNAME: {_HOSTNAME}")
-print(f"   PWD: {os.getcwd()}")
+print(f"   CWD: {_CWD}")
+print(f"   /databricks exists: {os.path.exists('/databricks')}")
+print(f"   SPARK_HOME: {os.getenv('SPARK_HOME')}")
 
-# Determine if we're in Databricks Apps - be AGGRESSIVE about detection
+# AGGRESSIVE Databricks detection - check multiple indicators
 _IS_DATABRICKS_APP = bool(
     _DATABRICKS_APP_NAME or 
     _DATABRICKS_APP_ID or 
     "databricks" in _HOSTNAME.lower() or
     os.path.exists("/databricks") or
-    os.getenv("SPARK_HOME")
+    os.getenv("SPARK_HOME") or
+    "/Workspace/" in _CWD or
+    _CWD.startswith("/home/app")  # Databricks Apps container path
 )
 
 if _IS_DATABRICKS_APP:
+    print("=" * 60)
     print("✅ DATABRICKS APPS ENVIRONMENT DETECTED")
-    # Force production mode - DO NOT load .env files that might override
+    print("🔒 FORCING PRODUCTION MODE - ALL MOCK DATA DISABLED")
+    print("=" * 60)
+    
+    # HARDCODE production mode - these CANNOT be overridden
+    os.environ["MODE"] = "PROD"
     os.environ["APP_MODE"] = "databricks"
     os.environ["RUN_MODE"] = "databricks"
+    os.environ["MOCK_DATA"] = "False"
+    os.environ["USE_MOCK_DATA"] = "False"
+    
+    # Set a flag that config module will check
+    os.environ["_DATABRICKS_PROD_FORCED"] = "1"
 else:
     print("⚠️  Running in local/development mode")
 

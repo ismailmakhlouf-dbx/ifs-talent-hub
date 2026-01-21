@@ -10,12 +10,19 @@ from typing import Optional
 
 def _is_databricks_environment() -> bool:
     """Quick check for Databricks environment - used before config module loads"""
+    # Check if main.py already forced production mode
+    if os.getenv("_DATABRICKS_PROD_FORCED") == "1":
+        return True
+    
+    cwd = os.getcwd()
     return bool(
         os.getenv("DATABRICKS_APP_NAME") or 
         os.getenv("DATABRICKS_APP_ID") or 
         "databricks" in os.getenv("HOSTNAME", "").lower() or
         os.path.exists("/databricks") or
-        os.getenv("SPARK_HOME")
+        os.getenv("SPARK_HOME") or
+        "/Workspace/" in cwd or
+        cwd.startswith("/home/app")  # Databricks Apps container path
     )
 
 
