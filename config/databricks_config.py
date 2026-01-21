@@ -7,16 +7,30 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
-# Try to load .env file, but don't crash if it's not accessible
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except (PermissionError, OSError):
-    # .env file not accessible - use environment variables only
-    pass
-except ImportError:
-    # python-dotenv not installed
-    pass
+
+def _is_databricks_environment() -> bool:
+    """Quick check for Databricks environment - used before config module loads"""
+    return bool(
+        os.getenv("DATABRICKS_APP_NAME") or 
+        os.getenv("DATABRICKS_APP_ID") or 
+        "databricks" in os.getenv("HOSTNAME", "").lower() or
+        os.path.exists("/databricks") or
+        os.getenv("SPARK_HOME")
+    )
+
+
+# CRITICAL: Only load .env file in local development
+# In Databricks Apps, we use managed identity and environment variables
+if not _is_databricks_environment():
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except (PermissionError, OSError):
+        # .env file not accessible - use environment variables only
+        pass
+    except ImportError:
+        # python-dotenv not installed
+        pass
 
 
 @dataclass
@@ -51,8 +65,8 @@ class DatabricksConfig:
 
 def is_databricks_app() -> bool:
     """Check if running as a Databricks App (using managed identity)"""
-    # Databricks Apps automatically set these environment variables
-    return bool(os.getenv("DATABRICKS_APP_NAME") or os.getenv("DATABRICKS_APP_ID"))
+    # Use the same aggressive detection as _is_databricks_environment
+    return _is_databricks_environment()
 
 
 def get_app_mode() -> str:

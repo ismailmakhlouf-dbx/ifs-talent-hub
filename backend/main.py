@@ -3,13 +3,51 @@ Unified Talent Management Hub - FastAPI Backend
 Powered by Databricks + Thomas International
 """
 
+import sys
+import os
+
+# ============================================================================
+# ENVIRONMENT DETECTION - MUST BE AT THE VERY TOP BEFORE ANY OTHER IMPORTS
+# ============================================================================
+print("=" * 60)
+print("🔍 ENVIRONMENT CHECK AT STARTUP")
+print("=" * 60)
+
+# Check for Databricks Apps environment variables
+_DATABRICKS_APP_NAME = os.getenv("DATABRICKS_APP_NAME")
+_DATABRICKS_APP_ID = os.getenv("DATABRICKS_APP_ID")
+_HOSTNAME = os.getenv("HOSTNAME", "")
+
+print(f"   DATABRICKS_APP_NAME: {_DATABRICKS_APP_NAME}")
+print(f"   DATABRICKS_APP_ID: {_DATABRICKS_APP_ID}")
+print(f"   HOSTNAME: {_HOSTNAME}")
+print(f"   PWD: {os.getcwd()}")
+
+# Determine if we're in Databricks Apps - be AGGRESSIVE about detection
+_IS_DATABRICKS_APP = bool(
+    _DATABRICKS_APP_NAME or 
+    _DATABRICKS_APP_ID or 
+    "databricks" in _HOSTNAME.lower() or
+    os.path.exists("/databricks") or
+    os.getenv("SPARK_HOME")
+)
+
+if _IS_DATABRICKS_APP:
+    print("✅ DATABRICKS APPS ENVIRONMENT DETECTED")
+    # Force production mode - DO NOT load .env files that might override
+    os.environ["APP_MODE"] = "databricks"
+    os.environ["RUN_MODE"] = "databricks"
+else:
+    print("⚠️  Running in local/development mode")
+
+print("=" * 60)
+
+# Now do regular imports
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from contextlib import asynccontextmanager
-import sys
-import os
 import logging
 import traceback
 
