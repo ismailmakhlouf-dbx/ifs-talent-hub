@@ -11,6 +11,18 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+# ============================================================================
+# FIX: Prevent Databricks SDK auth conflict in Databricks Apps
+# The SDK auto-detects credentials and fails if both OAuth AND PAT are present
+# In Databricks Apps, we use OAuth (managed identity), so remove PAT env vars
+# ============================================================================
+if os.getenv("DATABRICKS_APP_NAME"):
+    # Running in Databricks Apps - use OAuth, remove conflicting PAT tokens
+    if "DATABRICKS_TOKEN" in os.environ:
+        logger.info("Removing DATABRICKS_TOKEN to prevent auth conflict with OAuth")
+        del os.environ["DATABRICKS_TOKEN"]
+    logger.info("Databricks Apps environment - using OAuth managed identity")
+
 # Connection details
 DATABRICKS_HOST = "fevm-ismailmakhlouf-demo-ws.cloud.databricks.com"
 SQL_WAREHOUSE_HTTP_PATH = "/sql/1.0/warehouses/54da90976fc8c514"
@@ -191,14 +203,12 @@ class DatabricksAIService:
                 is_databricks_app = bool(os.getenv("DATABRICKS_APP_NAME"))
                 
                 if is_databricks_app:
-                    # Databricks Apps: Remove PAT from env to avoid auth conflict, use OAuth
-                    saved_token = os.environ.pop("DATABRICKS_TOKEN", None)
-                    try:
-                        self._workspace_client = WorkspaceClient()  # Auto-discovers OAuth
-                        logger.info("WorkspaceClient created with OAuth (managed identity)")
-                    finally:
-                        if saved_token:
-                            os.environ["DATABRICKS_TOKEN"] = saved_token
+                    # Databricks Apps: use OAuth (managed identity)
+                    # Token cleanup already done at module load, but double-check
+                    if "DATABRICKS_TOKEN" in os.environ:
+                        del os.environ["DATABRICKS_TOKEN"]
+                    self._workspace_client = WorkspaceClient()  # Auto-discovers OAuth
+                    logger.info("WorkspaceClient created with OAuth (managed identity)")
                 elif self.token:
                     # Local dev with PAT
                     host_url = f"https://{self.host}" if not self.host.startswith("http") else self.host

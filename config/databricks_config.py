@@ -134,8 +134,15 @@ def get_databricks_client():
     
     from databricks.sdk import WorkspaceClient
     
-    config = DatabricksConfig.from_env()
+    # In Databricks Apps, use managed identity (OAuth)
+    if is_databricks_app():
+        # Remove PAT token to prevent auth conflict
+        if "DATABRICKS_TOKEN" in os.environ:
+            del os.environ["DATABRICKS_TOKEN"]
+        return WorkspaceClient()  # Auto-discovers OAuth
     
+    # Local/other: use explicit config
+    config = DatabricksConfig.from_env()
     return WorkspaceClient(
         host=config.host,
         token=config.token,
