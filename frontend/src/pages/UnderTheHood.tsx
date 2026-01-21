@@ -9,45 +9,27 @@ import {
   Layers,
   Shield,
   CheckCircle,
-  XCircle,
   RefreshCw,
   ArrowRight,
   Box,
   Code,
   Sparkles,
-  TrendingUp,
-  TrendingDown,
-  Users,
-  Target,
-  Clock,
-  Award,
-  AlertTriangle,
-  Heart,
-  Briefcase,
-  BarChart2
+  Copy,
+  Check,
+  Download,
+  Table,
+  Link2,
+  ChevronDown,
+  ChevronRight,
+  FileCode,
+  FileJson,
+  Key,
+  Hash,
+  Calendar,
+  Type
 } from 'lucide-react'
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Line, PieChart, Pie, Cell } from 'recharts'
 import { usePageContext } from '../contexts/PageContext'
 import clsx from 'clsx'
-
-// HR Dashboard Mock Data
-const retentionData = [
-  { quarter: 'Q1 24', retention: 85, interventions: 12 },
-  { quarter: 'Q2 24', retention: 87, interventions: 18 },
-  { quarter: 'Q3 24', retention: 89, interventions: 24 },
-  { quarter: 'Q4 24', retention: 90, interventions: 31 },
-  { quarter: 'Q1 25', retention: 91, interventions: 38 },
-  { quarter: 'Q2 25', retention: 92, interventions: 42 },
-  { quarter: 'Q3 25', retention: 93, interventions: 48 },
-  { quarter: 'Q4 25', retention: 94, interventions: 52 },
-]
-
-const assessmentCoverage = [
-  { name: 'PPA', value: 92, color: '#f97316' },
-  { name: 'GIA', value: 78, color: '#8b5cf6' },
-  { name: 'HPTI', value: 65, color: '#06b6d4' },
-  { name: 'TEIQue', value: 45, color: '#22c55e' },
-]
 
 interface SystemStatus {
   is_databricks_app: boolean
@@ -508,199 +490,8 @@ response = w.serving_endpoints.query(
           </div>
         </div>
 
-        {/* HR Executive Dashboard - Workforce Impact */}
-        <div className="mt-8 bg-white rounded-2xl shadow-card p-8 border border-slate-200">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-thomas-orange to-thomas-pink flex items-center justify-center">
-              <BarChart2 className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h3 className="font-display font-bold text-xl text-thomas-slate">HR Executive Dashboard</h3>
-              <p className="text-slate-500">Thomas + GenAI Impact on IFS Workforce</p>
-            </div>
-          </div>
-
-          {/* Primary KPIs - 4 cards */}
-          <div className="grid grid-cols-4 gap-4 mb-6">
-            <KPICard 
-              icon={<Users className="w-5 h-5" />}
-              iconBg="from-blue-500 to-cyan-500"
-              label="Active Employees"
-              value="2,847"
-              change="+12%"
-              positive={true}
-              subtext="vs. last quarter"
-            />
-            <KPICard 
-              icon={<TrendingDown className="w-5 h-5" />}
-              iconBg="from-green-500 to-emerald-500"
-              label="Churn Rate"
-              value="8.2%"
-              change="-34%"
-              positive={true}
-              subtext="reduced via early intervention"
-            />
-            <KPICard 
-              icon={<Target className="w-5 h-5" />}
-              iconBg="from-purple-500 to-pink-500"
-              label="Hiring Accuracy"
-              value="94%"
-              change="+28%"
-              positive={true}
-              subtext="Thomas-screened candidates"
-            />
-            <KPICard 
-              icon={<Clock className="w-5 h-5" />}
-              iconBg="from-orange-500 to-red-500"
-              label="Time to Hire"
-              value="18 days"
-              change="-42%"
-              positive={true}
-              subtext="AI-accelerated screening"
-            />
-          </div>
-
-          {/* Charts Row */}
-          <div className="grid grid-cols-3 gap-6 mb-6">
-            {/* Retention Improvement Over Time */}
-            <div className="col-span-2 bg-slate-50 rounded-xl p-4 border border-slate-200">
-              <h4 className="font-semibold text-thomas-slate text-sm mb-4">Retention Rate Improvement (2024-2026)</h4>
-              <ResponsiveContainer width="100%" height={200}>
-                <ComposedChart data={retentionData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="quarter" tick={{ fontSize: 10 }} stroke="#94a3b8" />
-                  <YAxis yAxisId="left" tick={{ fontSize: 10 }} stroke="#94a3b8" domain={[80, 100]} />
-                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} stroke="#94a3b8" />
-                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
-                  <Bar yAxisId="left" dataKey="retention" fill="#22c55e" radius={[4, 4, 0, 0]} name="Retention %" />
-                  <Line yAxisId="right" type="monotone" dataKey="interventions" stroke="#f97316" strokeWidth={2} dot={{ fill: '#f97316', r: 3 }} name="AI Interventions" />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Thomas Assessment Adoption */}
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-              <h4 className="font-semibold text-thomas-slate text-sm mb-4">Thomas Assessment Coverage</h4>
-              <div className="flex justify-center">
-                <ResponsiveContainer width={160} height={160}>
-                  <PieChart>
-                    <Pie
-                      data={assessmentCoverage}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={45}
-                      outerRadius={70}
-                      dataKey="value"
-                      stroke="none"
-                    >
-                      {assessmentCoverage.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {assessmentCoverage.map((item, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-[10px]">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-slate-600">{item.name}</span>
-                    <span className="text-slate-400 ml-auto">{item.value}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Secondary KPIs */}
-          <div className="grid grid-cols-4 gap-4 mb-6">
-            <SecondaryKPI 
-              icon={<Award className="w-4 h-4 text-yellow-500" />}
-              label="Promotions Predicted"
-              value="156"
-              description="Leadership-ready identified"
-            />
-            <SecondaryKPI 
-              icon={<AlertTriangle className="w-4 h-4 text-orange-500" />}
-              label="Churn Risks Flagged"
-              value="43"
-              description="Early intervention enabled"
-            />
-            <SecondaryKPI 
-              icon={<Heart className="w-4 h-4 text-pink-500" />}
-              label="Team Chemistry Score"
-              value="87%"
-              description="Cross-department average"
-            />
-            <SecondaryKPI 
-              icon={<Briefcase className="w-4 h-4 text-blue-500" />}
-              label="Roles Filled"
-              value="89"
-              description="YTD with Thomas screening"
-            />
-          </div>
-
-          {/* GenAI Impact Breakdown */}
-          <div className="bg-gradient-to-r from-thomas-slate/5 to-thomas-pink/5 rounded-xl p-5 border border-thomas-orange/20">
-            <h4 className="font-semibold text-thomas-slate text-sm mb-4 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-thomas-orange" />
-              GenAI-Powered Insights Impact
-            </h4>
-            <div className="grid grid-cols-5 gap-4">
-              <ImpactCard 
-                label="AskThom Queries"
-                value="12,450"
-                detail="Manager questions answered"
-              />
-              <ImpactCard 
-                label="CVs Analyzed"
-                value="3,200"
-                detail="Automated screening"
-              />
-              <ImpactCard 
-                label="Bias Alerts"
-                value="89"
-                detail="Prevented biased decisions"
-              />
-              <ImpactCard 
-                label="Retention Saves"
-                value="£2.4M"
-                detail="Avoided replacement costs"
-              />
-              <ImpactCard 
-                label="Hours Saved"
-                value="4,800"
-                detail="HR admin automation"
-              />
-            </div>
-          </div>
-
-          {/* ROI Summary */}
-          <div className="mt-6 bg-gradient-to-r from-thomas-orange to-thomas-pink rounded-xl p-5">
-            <div className="grid grid-cols-4 gap-6 text-white">
-              <div>
-                <p className="text-white/70 text-xs mb-1">Platform Investment</p>
-                <p className="text-2xl font-bold">£180K</p>
-                <p className="text-[10px] text-white/60">Annual license + implementation</p>
-              </div>
-              <div>
-                <p className="text-white/70 text-xs mb-1">Annual Savings</p>
-                <p className="text-2xl font-bold">£2.8M</p>
-                <p className="text-[10px] text-white/60">Churn reduction + efficiency</p>
-              </div>
-              <div>
-                <p className="text-white/70 text-xs mb-1">Payback Period</p>
-                <p className="text-2xl font-bold">23 days</p>
-                <p className="text-[10px] text-white/60">Time to positive ROI</p>
-              </div>
-              <div>
-                <p className="text-white/70 text-xs mb-1">Annual ROI</p>
-                <p className="text-2xl font-bold">1,456%</p>
-                <p className="text-[10px] text-white/60">Return on investment</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Unity Catalog Data Model */}
+        <DataModelSection />
 
         {/* Production Architecture - Multi-Agent System */}
         <div className="mt-8 bg-white rounded-2xl shadow-card p-8 border border-slate-200">
@@ -1003,86 +794,515 @@ function InfraCard({
   )
 }
 
-// KPI Card for HR Dashboard
-function KPICard({
-  icon,
-  iconBg,
-  label,
-  value,
-  change,
-  positive,
-  subtext
-}: {
-  icon: React.ReactNode
-  iconBg: string
-  label: string
-  value: string
-  change: string
-  positive: boolean
-  subtext: string
-}) {
+// Data Model Section Component
+function DataModelSection() {
+  const [exportFormat, setExportFormat] = useState<'sql' | 'schema' | 'json'>('sql')
+  const [expandedTable, setExpandedTable] = useState<string | null>('employees')
+  const [copied, setCopied] = useState(false)
+
+  const dataModel = {
+    catalog: 'ifs_talent_hub',
+    schema: 'thomas_analytics',
+    tables: [
+      {
+        name: 'employees',
+        description: 'Core employee master data with Thomas assessment linkage',
+        businessContext: 'Foundation table for all HR analytics and talent management',
+        updateFrequency: 'Real-time (streaming)',
+        columns: [
+          { name: 'employee_id', type: 'STRING', description: 'Unique employee identifier', isPrimaryKey: true, example: 'EMP-1234' },
+          { name: 'full_name', type: 'STRING', description: 'Employee full name', example: 'Sarah Mitchell' },
+          { name: 'email', type: 'STRING', description: 'Corporate email address', example: 'sarah.mitchell@ifs.com' },
+          { name: 'department', type: 'STRING', description: 'Department assignment', example: 'Engineering' },
+          { name: 'title', type: 'STRING', description: 'Job title', example: 'Senior Software Engineer' },
+          { name: 'manager_id', type: 'STRING', description: 'Direct manager employee ID', isForeignKey: true, references: 'employees.employee_id', example: 'EMP-1000' },
+          { name: 'hire_date', type: 'DATE', description: 'Employment start date', example: '2022-03-15' },
+          { name: 'location', type: 'STRING', description: 'Office location', example: 'Stockholm, Sweden' },
+          { name: 'salary', type: 'DECIMAL(12,2)', description: 'Annual salary (local currency)', example: '850000.00' },
+          { name: 'currency', type: 'STRING', description: 'Salary currency code', example: 'SEK' },
+          { name: 'status', type: 'STRING', description: 'Employment status', example: 'Active' },
+          { name: 'created_at', type: 'TIMESTAMP', description: 'Record creation timestamp', example: '2022-03-15T09:00:00Z' },
+          { name: 'updated_at', type: 'TIMESTAMP', description: 'Last update timestamp', example: '2024-01-15T14:30:00Z' },
+        ],
+        metrics: ['headcount', 'turnover_rate', 'avg_tenure'],
+      },
+      {
+        name: 'thomas_assessments',
+        description: 'Thomas International psychometric assessment results',
+        businessContext: 'PPA, GIA, HPTI, and TEIQue scores for behavioral and cognitive profiling',
+        updateFrequency: 'Hourly batch',
+        columns: [
+          { name: 'assessment_id', type: 'STRING', description: 'Unique assessment identifier', isPrimaryKey: true, example: 'ASSESS-7890' },
+          { name: 'employee_id', type: 'STRING', description: 'Employee reference', isForeignKey: true, references: 'employees.employee_id', example: 'EMP-1234' },
+          { name: 'assessment_type', type: 'STRING', description: 'Type: PPA, GIA, HPTI, TEIQue', example: 'PPA' },
+          { name: 'dominance', type: 'INT', description: 'PPA Dominance score (0-100)', example: '72' },
+          { name: 'influence', type: 'INT', description: 'PPA Influence score (0-100)', example: '85' },
+          { name: 'steadiness', type: 'INT', description: 'PPA Steadiness score (0-100)', example: '45' },
+          { name: 'compliance', type: 'INT', description: 'PPA Compliance score (0-100)', example: '68' },
+          { name: 'gia_score', type: 'INT', description: 'General Intelligence Assessment score', example: '127' },
+          { name: 'hpti_conscientiousness', type: 'INT', description: 'HPTI Conscientiousness (0-100)', example: '78' },
+          { name: 'hpti_adjustment', type: 'INT', description: 'HPTI Adjustment (0-100)', example: '65' },
+          { name: 'hpti_curiosity', type: 'INT', description: 'HPTI Curiosity (0-100)', example: '82' },
+          { name: 'hpti_risk_approach', type: 'INT', description: 'HPTI Risk Approach (0-100)', example: '71' },
+          { name: 'hpti_ambiguity_acceptance', type: 'INT', description: 'HPTI Ambiguity Acceptance (0-100)', example: '69' },
+          { name: 'hpti_competitiveness', type: 'INT', description: 'HPTI Competitiveness (0-100)', example: '75' },
+          { name: 'assessed_at', type: 'TIMESTAMP', description: 'Assessment completion timestamp', example: '2024-01-10T11:30:00Z' },
+        ],
+        metrics: ['avg_gia', 'disc_distribution', 'hpti_benchmarks'],
+      },
+      {
+        name: 'performance_metrics',
+        description: 'Employee performance tracking and churn risk predictions',
+        businessContext: 'AI-generated performance insights and retention risk scores',
+        updateFrequency: 'Daily batch',
+        columns: [
+          { name: 'metric_id', type: 'STRING', description: 'Unique metric record ID', isPrimaryKey: true, example: 'PERF-4567' },
+          { name: 'employee_id', type: 'STRING', description: 'Employee reference', isForeignKey: true, references: 'employees.employee_id', example: 'EMP-1234' },
+          { name: 'period', type: 'STRING', description: 'Performance period (Q1 2024)', example: 'Q4 2024' },
+          { name: 'performance_score', type: 'INT', description: 'Overall performance score (0-100)', example: '87' },
+          { name: 'morale_score', type: 'INT', description: 'AI-derived morale indicator (0-100)', example: '72' },
+          { name: 'churn_risk', type: 'STRING', description: 'Predicted churn risk level', example: 'Low' },
+          { name: 'churn_probability', type: 'DECIMAL(5,4)', description: 'Churn probability (0-1)', example: '0.12' },
+          { name: 'leadership_readiness', type: 'INT', description: 'Leadership potential score (0-100)', example: '78' },
+          { name: 'slack_sentiment', type: 'DECIMAL(3,2)', description: 'Slack message sentiment (-1 to 1)', example: '0.65' },
+          { name: 'goals_completed', type: 'INT', description: 'Completed goals this period', example: '8' },
+          { name: 'goals_total', type: 'INT', description: 'Total assigned goals', example: '10' },
+          { name: 'generated_at', type: 'TIMESTAMP', description: 'Metric generation timestamp', example: '2024-01-15T06:00:00Z' },
+        ],
+        metrics: ['avg_performance', 'churn_risk_distribution', 'morale_trend'],
+      },
+      {
+        name: 'team_chemistry',
+        description: 'Pairwise team chemistry scores based on Thomas profiles',
+        businessContext: 'Predicts collaboration effectiveness between team members',
+        updateFrequency: 'Daily batch',
+        columns: [
+          { name: 'chemistry_id', type: 'STRING', description: 'Unique chemistry record ID', isPrimaryKey: true, example: 'CHEM-1122' },
+          { name: 'employee_a_id', type: 'STRING', description: 'First employee reference', isForeignKey: true, references: 'employees.employee_id', example: 'EMP-1234' },
+          { name: 'employee_b_id', type: 'STRING', description: 'Second employee reference', isForeignKey: true, references: 'employees.employee_id', example: 'EMP-5678' },
+          { name: 'chemistry_score', type: 'INT', description: 'Predicted compatibility (0-100)', example: '84' },
+          { name: 'collaboration_style', type: 'STRING', description: 'Recommended collaboration approach', example: 'Complementary' },
+          { name: 'interaction_note', type: 'STRING', description: 'AI-generated interaction guidance', example: 'Schedule daily syncs' },
+          { name: 'calculated_at', type: 'TIMESTAMP', description: 'Calculation timestamp', example: '2024-01-15T06:00:00Z' },
+        ],
+        metrics: ['avg_team_chemistry', 'collaboration_patterns'],
+      },
+      {
+        name: 'candidates',
+        description: 'Recruitment candidates with AI-extracted CV insights',
+        businessContext: 'Hiring pipeline tracking with Thomas assessment integration',
+        updateFrequency: 'Real-time (streaming)',
+        columns: [
+          { name: 'candidate_id', type: 'STRING', description: 'Unique candidate identifier', isPrimaryKey: true, example: 'CAND-9012' },
+          { name: 'full_name', type: 'STRING', description: 'Candidate full name', example: 'Alex Johnson' },
+          { name: 'email', type: 'STRING', description: 'Contact email', example: 'alex.johnson@email.com' },
+          { name: 'role_id', type: 'STRING', description: 'Applied role reference', isForeignKey: true, references: 'open_roles.role_id', example: 'ROLE-2345' },
+          { name: 'status', type: 'STRING', description: 'Pipeline status', example: 'Interview' },
+          { name: 'cv_text', type: 'STRING', description: 'Extracted CV text content', example: '(CV content...)' },
+          { name: 'ai_summary', type: 'STRING', description: 'AI-generated candidate summary', example: '(AI summary...)' },
+          { name: 'skills_extracted', type: 'ARRAY<STRING>', description: 'AI-extracted skills list', example: '["Python", "SQL"]' },
+          { name: 'experience_years', type: 'INT', description: 'Total years of experience', example: '7' },
+          { name: 'fit_score', type: 'INT', description: 'Role fit prediction (0-100)', example: '89' },
+          { name: 'thomas_ppa_completed', type: 'BOOLEAN', description: 'PPA assessment completed', example: 'true' },
+          { name: 'applied_at', type: 'TIMESTAMP', description: 'Application timestamp', example: '2024-01-08T14:22:00Z' },
+          { name: 'updated_at', type: 'TIMESTAMP', description: 'Last status update', example: '2024-01-12T09:15:00Z' },
+        ],
+        metrics: ['pipeline_conversion', 'time_to_hire', 'source_effectiveness'],
+      },
+      {
+        name: 'ai_interactions',
+        description: 'AskThom conversation logs and manager queries',
+        businessContext: 'Tracks AI assistant usage and query patterns',
+        updateFrequency: 'Real-time (streaming)',
+        columns: [
+          { name: 'interaction_id', type: 'STRING', description: 'Unique interaction ID', isPrimaryKey: true, example: 'INT-3344' },
+          { name: 'user_id', type: 'STRING', description: 'Manager/user employee ID', isForeignKey: true, references: 'employees.employee_id', example: 'EMP-1000' },
+          { name: 'query', type: 'STRING', description: 'User question text', example: 'Tell me about Sarah' },
+          { name: 'response', type: 'STRING', description: 'AI response text', example: '(AI response...)' },
+          { name: 'context_page', type: 'STRING', description: 'Page context when asked', example: 'Performance' },
+          { name: 'context_employee_id', type: 'STRING', description: 'Employee being discussed', example: 'EMP-1234' },
+          { name: 'response_time_ms', type: 'INT', description: 'Response latency in ms', example: '1250' },
+          { name: 'model_used', type: 'STRING', description: 'Model serving endpoint', example: 'gemini-2-5-flash' },
+          { name: 'tokens_used', type: 'INT', description: 'Total tokens consumed', example: '847' },
+          { name: 'created_at', type: 'TIMESTAMP', description: 'Interaction timestamp', example: '2024-01-15T10:30:00Z' },
+        ],
+        metrics: ['queries_per_day', 'avg_response_time', 'popular_topics'],
+      },
+    ],
+    relationships: [
+      { from: 'employees.manager_id', to: 'employees.employee_id', type: '1:N' as const },
+      { from: 'thomas_assessments.employee_id', to: 'employees.employee_id', type: '1:N' as const },
+      { from: 'performance_metrics.employee_id', to: 'employees.employee_id', type: '1:N' as const },
+      { from: 'team_chemistry.employee_a_id', to: 'employees.employee_id', type: 'N:M' as const },
+      { from: 'candidates.role_id', to: 'open_roles.role_id', type: '1:N' as const },
+      { from: 'ai_interactions.user_id', to: 'employees.employee_id', type: '1:N' as const },
+    ],
+  }
+
+  const generateSQL = () => {
+    let sql = `-- Unity Catalog Data Model for IFS Talent Hub
+-- Catalog: ${dataModel.catalog}
+-- Schema: ${dataModel.schema}
+-- Generated: ${new Date().toISOString()}
+-- Powered by Thomas International + Databricks
+
+-- Create catalog (if not exists)
+CREATE CATALOG IF NOT EXISTS ${dataModel.catalog};
+USE CATALOG ${dataModel.catalog};
+
+-- Create schema
+CREATE SCHEMA IF NOT EXISTS ${dataModel.schema}
+COMMENT 'Thomas International talent analytics for IFS workforce management';
+
+USE SCHEMA ${dataModel.schema};
+
+`
+    dataModel.tables.forEach(table => {
+      sql += `-- ============================================================================
+-- Table: ${table.name}
+-- ${table.description}
+-- Business Context: ${table.businessContext}
+-- Update Frequency: ${table.updateFrequency}
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS ${table.name} (
+`
+      const columnDefs = table.columns.map(col => {
+        let def = `  ${col.name} ${col.type}`
+        if (col.isPrimaryKey) def += ' NOT NULL'
+        def += ` COMMENT '${col.description}'`
+        return def
+      })
+      sql += columnDefs.join(',\n')
+      
+      const pkCol = table.columns.find(c => c.isPrimaryKey)
+      if (pkCol) {
+        sql += `,\n  CONSTRAINT pk_${table.name} PRIMARY KEY (${pkCol.name})`
+      }
+      
+      sql += `
+)
+COMMENT '${table.description}';
+
+`
+    })
+
+    if (exportFormat === 'sql') {
+      // Add sample INSERT statements for data hydration
+      sql += `-- ============================================================================
+-- SAMPLE DATA HYDRATION
+-- Uncomment and modify to populate tables with initial data
+-- ============================================================================
+
+-- Sample employees
+/*
+INSERT INTO employees VALUES
+  ('EMP-1000', 'Marcus Chen', 'marcus.chen@ifs.com', 'Engineering', 'VP Engineering', NULL, '2019-06-15', 'Stockholm, Sweden', 2500000.00, 'SEK', 'Active', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP()),
+  ('EMP-1001', 'Sarah Mitchell', 'sarah.mitchell@ifs.com', 'Engineering', 'Senior Software Engineer', 'EMP-1000', '2022-03-15', 'London, UK', 95000.00, 'GBP', 'Active', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP());
+*/
+
+-- Sample Thomas assessments
+/*
+INSERT INTO thomas_assessments VALUES
+  ('ASSESS-001', 'EMP-1001', 'PPA', 72, 85, 45, 68, 127, 78, 65, 82, 71, 69, 75, CURRENT_TIMESTAMP());
+*/
+
+`
+    }
+
+    return sql
+  }
+
+  const generateJSONSchema = () => {
+    return JSON.stringify({
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+      title: 'IFS Talent Hub Data Model',
+      description: 'Thomas International + Databricks AI workforce analytics',
+      catalog: dataModel.catalog,
+      schema: dataModel.schema,
+      tables: dataModel.tables.map(table => ({
+        name: table.name,
+        description: table.description,
+        businessContext: table.businessContext,
+        updateFrequency: table.updateFrequency,
+        columns: table.columns,
+        metrics: table.metrics,
+      })),
+      relationships: dataModel.relationships,
+    }, null, 2)
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const downloadExport = () => {
+    let content: string
+    let filename: string
+    let mimeType: string
+    
+    if (exportFormat === 'json') {
+      content = generateJSONSchema()
+      filename = 'ifs_talent_hub_schema.json'
+      mimeType = 'application/json'
+    } else {
+      content = generateSQL()
+      filename = exportFormat === 'sql' ? 'ifs_talent_hub_with_data.sql' : 'ifs_talent_hub_schema.sql'
+      mimeType = 'text/sql'
+    }
+    
+    const blob = new Blob([content], { type: mimeType })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const getTypeIcon = (type: string) => {
+    if (type.includes('STRING')) return <Type className="w-3 h-3" />
+    if (type.includes('INT') || type.includes('DECIMAL')) return <Hash className="w-3 h-3" />
+    if (type.includes('TIMESTAMP') || type.includes('DATE')) return <Calendar className="w-3 h-3" />
+    if (type.includes('BOOLEAN')) return <CheckCircle className="w-3 h-3" />
+    if (type.includes('ARRAY')) return <Layers className="w-3 h-3" />
+    return <Database className="w-3 h-3" />
+  }
+
   return (
-    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${iconBg} flex items-center justify-center text-white`}>
-          {icon}
+    <div className="mt-8 bg-[#0D1117] rounded-2xl p-8 border border-white/10 text-white">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+            <Database className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h3 className="font-display font-bold text-xl">Unity Catalog Data Model</h3>
+            <code className="text-xs text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded">{dataModel.catalog}.{dataModel.schema}</code>
+          </div>
         </div>
-        <span className="text-xs font-medium text-slate-500">{label}</span>
+        
+        {/* Export Controls */}
+        <div className="flex items-center gap-3">
+          <div className="flex bg-white/5 rounded-lg p-1">
+            {(['sql', 'schema', 'json'] as const).map((format) => (
+              <button
+                key={format}
+                onClick={() => setExportFormat(format)}
+                className={clsx(
+                  'px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5',
+                  exportFormat === format ? 'bg-cyan-500 text-white' : 'text-slate-400 hover:text-white'
+                )}
+              >
+                {format === 'sql' && <><FileCode className="w-3 h-3" /> SQL + Data</>}
+                {format === 'schema' && <><FileCode className="w-3 h-3" /> Schema Only</>}
+                {format === 'json' && <><FileJson className="w-3 h-3" /> JSON</>}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={downloadExport}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 rounded-lg text-white text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            <Download className="w-4 h-4" />
+            Export Schema
+          </button>
+        </div>
       </div>
-      <div className="flex items-end gap-2 mb-1">
-        <span className="text-2xl font-bold text-thomas-slate">{value}</span>
-        <span className={clsx(
-          "text-sm font-semibold flex items-center gap-0.5 mb-1",
-          positive ? "text-success" : "text-danger"
-        )}>
-          {positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-          {change}
-        </span>
-      </div>
-      <p className="text-[10px] text-slate-400">{subtext}</p>
-    </div>
-  )
-}
 
-// Secondary KPI for HR Dashboard
-function SecondaryKPI({
-  icon,
-  label,
-  value,
-  description
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-  description: string
-}) {
-  return (
-    <div className="bg-white rounded-lg p-3 border border-slate-200">
-      <div className="flex items-center gap-2 mb-2">
-        {icon}
-        <span className="text-xs font-medium text-slate-600">{label}</span>
+      {/* Ready for AI/BI Banner */}
+      <div className="mb-6 bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl p-4 border border-purple-500/20 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Sparkles className="w-5 h-5 text-purple-400" />
+          <div>
+            <span className="font-semibold text-purple-300">Ready for Databricks AI/BI</span>
+            <p className="text-xs text-purple-400/70">Optimized for Genie natural language queries and Lakeview dashboards</p>
+          </div>
+        </div>
+        <button 
+          onClick={() => copyToClipboard(`${dataModel.catalog}.${dataModel.schema}`)}
+          className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition-colors"
+        >
+          {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+          Copy Catalog Path
+        </button>
       </div>
-      <p className="text-xl font-bold text-thomas-slate">{value}</p>
-      <p className="text-[10px] text-slate-400">{description}</p>
-    </div>
-  )
-}
 
-// Impact Card for GenAI section
-function ImpactCard({
-  label,
-  value,
-  detail
-}: {
-  label: string
-  value: string
-  detail: string
-}) {
-  return (
-    <div className="bg-white rounded-lg p-3 border border-slate-200">
-      <p className="text-[10px] text-slate-500 mb-1">{label}</p>
-      <p className="text-lg font-bold text-thomas-slate">{value}</p>
-      <p className="text-[9px] text-slate-400">{detail}</p>
+      {/* Schema Stats */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+          <div className="flex items-center gap-2 text-slate-400 mb-1">
+            <Table className="w-4 h-4" />
+            <span className="text-xs">Tables</span>
+          </div>
+          <p className="text-2xl font-bold">{dataModel.tables.length}</p>
+        </div>
+        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+          <div className="flex items-center gap-2 text-slate-400 mb-1">
+            <Database className="w-4 h-4" />
+            <span className="text-xs">Total Columns</span>
+          </div>
+          <p className="text-2xl font-bold">{dataModel.tables.reduce((acc, t) => acc + t.columns.length, 0)}</p>
+        </div>
+        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+          <div className="flex items-center gap-2 text-slate-400 mb-1">
+            <Link2 className="w-4 h-4" />
+            <span className="text-xs">Relationships</span>
+          </div>
+          <p className="text-2xl font-bold">{dataModel.relationships.length}</p>
+        </div>
+        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+          <div className="flex items-center gap-2 text-slate-400 mb-1">
+            <RefreshCw className="w-4 h-4" />
+            <span className="text-xs">Update Modes</span>
+          </div>
+          <p className="text-2xl font-bold">2</p>
+          <p className="text-[10px] text-slate-500">streaming, daily</p>
+        </div>
+      </div>
+
+      {/* Entity Relationships */}
+      <div className="mb-6 bg-white/5 rounded-xl p-4 border border-white/10">
+        <div className="flex items-center gap-2 mb-4">
+          <Link2 className="w-4 h-4 text-cyan-400" />
+          <h4 className="font-semibold text-sm">Entity Relationships</h4>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {dataModel.relationships.slice(0, 5).map((rel, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="px-3 py-1.5 bg-cyan-500/20 text-cyan-300 rounded-lg text-xs font-mono">{rel.from.split('.')[0]}</span>
+              <span className="px-2 py-0.5 bg-white/10 text-slate-400 rounded text-[10px]">{rel.type}</span>
+              <span className="px-3 py-1.5 bg-pink-500/20 text-pink-300 rounded-lg text-xs font-mono">{rel.to.split('.')[0]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Table Definitions */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Table className="w-4 h-4 text-cyan-400" />
+          <h4 className="font-semibold text-sm">Table Definitions</h4>
+        </div>
+        <div className="space-y-2">
+          {dataModel.tables.map((table) => (
+            <div key={table.name} className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+              <button
+                onClick={() => setExpandedTable(expandedTable === table.name ? null : table.name)}
+                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                    <Table className="w-4 h-4 text-cyan-400" />
+                  </div>
+                  <div className="text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm">{table.name}</span>
+                      <span className="text-[10px] text-slate-500">({table.columns.length} columns)</span>
+                    </div>
+                    <p className="text-xs text-slate-400">{table.description}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={clsx(
+                    'px-2 py-1 rounded text-[10px] font-medium',
+                    table.updateFrequency.includes('Real-time') ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+                  )}>
+                    {table.updateFrequency}
+                  </span>
+                  {expandedTable === table.name ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
+                </div>
+              </button>
+              
+              {expandedTable === table.name && (
+                <div className="border-t border-white/10 p-4">
+                  <div className="mb-3 flex items-center gap-2">
+                    <Sparkles className="w-3 h-3 text-purple-400" />
+                    <span className="text-xs text-slate-400">Business Context:</span>
+                    <span className="text-xs text-slate-300">{table.businessContext}</span>
+                  </div>
+                  
+                  <div className="overflow-hidden rounded-lg border border-white/10">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="bg-white/5">
+                          <th className="text-left py-2 px-3 text-slate-400 font-medium">Column</th>
+                          <th className="text-left py-2 px-3 text-slate-400 font-medium">Type</th>
+                          <th className="text-left py-2 px-3 text-slate-400 font-medium">Description</th>
+                          <th className="text-left py-2 px-3 text-slate-400 font-medium">Example</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {table.columns.map((col, i) => (
+                          <tr key={i} className="border-t border-white/5">
+                            <td className="py-2 px-3">
+                              <div className="flex items-center gap-1.5">
+                                {col.isPrimaryKey && <span title="Primary Key"><Key className="w-3 h-3 text-yellow-400" /></span>}
+                                {col.isForeignKey && <span title="Foreign Key"><Link2 className="w-3 h-3 text-cyan-400" /></span>}
+                                <span className={clsx('font-mono', col.isPrimaryKey ? 'text-yellow-300' : col.isForeignKey ? 'text-cyan-300' : 'text-white')}>
+                                  {col.name}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-2 px-3">
+                              <div className="flex items-center gap-1.5 text-slate-400">
+                                {getTypeIcon(col.type)}
+                                <span className="font-mono text-[10px]">{col.type}</span>
+                              </div>
+                            </td>
+                            <td className="py-2 px-3 text-slate-300">{col.description}</td>
+                            <td className="py-2 px-3">
+                              <code className="text-[10px] text-slate-500 bg-white/5 px-1.5 py-0.5 rounded">{col.example}</code>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500">Key Metrics:</span>
+                      {table.metrics.map((metric, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded text-[10px]">{metric}</span>
+                      ))}
+                    </div>
+                    <button 
+                      onClick={() => copyToClipboard(`SELECT * FROM ${dataModel.catalog}.${dataModel.schema}.${table.name} LIMIT 100;`)}
+                      className="flex items-center gap-1.5 text-[10px] text-cyan-400 hover:text-cyan-300"
+                    >
+                      <Copy className="w-3 h-3" />
+                      Copy SELECT
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* SQL Preview */}
+      <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-semibold text-sm">Schema Preview</h4>
+          <button 
+            onClick={() => copyToClipboard(generateSQL())}
+            className="flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300"
+          >
+            {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+            Copy All SQL
+          </button>
+        </div>
+        <pre className="bg-[#0a0a0f] rounded-lg p-4 text-[10px] text-green-400 overflow-x-auto max-h-64 overflow-y-auto font-mono">
+          {generateSQL().slice(0, 2000)}
+          {generateSQL().length > 2000 && '\n\n-- ... (click "Export Schema" to download complete definition)'}
+        </pre>
+      </div>
     </div>
   )
 }

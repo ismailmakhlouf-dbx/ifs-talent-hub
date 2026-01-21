@@ -54,10 +54,16 @@ export default function Sidebar({ collapsed, onToggle, selectedManager, onManage
       description: 'Team metrics & morale'
     },
     { 
+      path: '/hr-dashboard', 
+      icon: Users, 
+      label: 'HR Dashboard', 
+      description: 'Executive workforce analytics'
+    },
+    { 
       path: '/under-the-hood', 
       icon: Cpu, 
       label: 'Under the Hood', 
-      description: 'Databricks architecture'
+      description: 'Architecture & data model'
     },
   ]
 

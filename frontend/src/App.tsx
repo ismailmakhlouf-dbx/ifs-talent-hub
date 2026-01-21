@@ -6,6 +6,7 @@ import PerformanceDashboard from './pages/PerformanceDashboard'
 import CandidateDetail from './pages/CandidateDetail'
 import EmployeeDetail from './pages/EmployeeDetail'
 import Referrals from './pages/Referrals'
+import HRDashboard from './pages/HRDashboard'
 import UnderTheHood from './pages/UnderTheHood'
 import { PageContextProvider } from './contexts/PageContext'
 import { AskThomFloatingButton } from './components/AskThom'
@@ -35,6 +36,7 @@ function App() {
               <Route path="/referrals" element={<Referrals />} />
               <Route path="/performance" element={<PerformanceDashboard managerId={selectedManager} />} />
               <Route path="/performance/employee/:employeeId" element={<EmployeeDetail />} />
+              <Route path="/hr-dashboard" element={<HRDashboard />} />
               <Route path="/under-the-hood" element={<UnderTheHood />} />
             </Routes>
           </main>
