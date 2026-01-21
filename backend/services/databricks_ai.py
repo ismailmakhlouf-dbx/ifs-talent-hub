@@ -154,11 +154,11 @@ class DatabricksAIService:
     _workspace_client = None
     
     def __post_init__(self):
-        # Check for Databricks Apps OAuth vs PAT
-        has_oauth = bool(os.getenv("DATABRICKS_CLIENT_ID")) and bool(os.getenv("DATABRICKS_CLIENT_SECRET"))
-        if has_oauth:
-            self.token = None  # Use OAuth, not PAT
-            logger.info("Databricks OAuth detected - using managed identity")
+        # Check for Databricks Apps environment (DATABRICKS_APP_NAME is the reliable indicator)
+        is_databricks_app = bool(os.getenv("DATABRICKS_APP_NAME"))
+        if is_databricks_app:
+            self.token = None  # Use managed identity, not PAT
+            logger.info("Databricks Apps detected (DATABRICKS_APP_NAME set) - using managed identity")
         else:
             self.token = os.getenv("DATABRICKS_TOKEN", "") or None
             if self.token:
@@ -187,8 +187,8 @@ class DatabricksAIService:
             try:
                 from databricks.sdk import WorkspaceClient
                 
-                client_id = os.getenv("DATABRICKS_CLIENT_ID")
-                is_databricks_app = bool(client_id)
+                # Detect Databricks Apps via DATABRICKS_APP_NAME (set by platform)
+                is_databricks_app = bool(os.getenv("DATABRICKS_APP_NAME"))
                 
                 if is_databricks_app:
                     # Databricks Apps: Remove PAT from env to avoid auth conflict, use OAuth
@@ -223,7 +223,7 @@ class DatabricksAIService:
         # For now, return None and let callers use fallback
         if self._connection is None:
             # Skip SQL in Databricks Apps environment
-            if os.getenv("DATABRICKS_CLIENT_ID"):
+            if os.getenv("DATABRICKS_APP_NAME"):
                 logger.info("SQL connection skipped in Databricks Apps (not supported)")
                 return None
             

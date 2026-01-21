@@ -1,30 +1,26 @@
+"""FastAPI app with routers, static files, and lifespan - debugging step 4"""
 import os
-# ============================================================================
-# DATABRICKS CLOUD DETECTION - ABSOLUTE FIRST THING
-# ============================================================================
+import sys
+import logging
+import traceback as tb
+
+print(f"[BOOT] DATABRICKS_APP_NAME={os.getenv('DATABRICKS_APP_NAME')}")
+print(f"[BOOT] CWD={os.getcwd()}")
+
+# Set production mode if in Databricks
 if os.getenv("DATABRICKS_APP_NAME"):
     os.environ["MODE"] = "PROD"
     os.environ["APP_MODE"] = "databricks"
     os.environ["RUN_MODE"] = "databricks"
     os.environ["MOCK_DATA"] = "False"
     os.environ["_DATABRICKS_PROD_FORCED"] = "1"
-    print("🚨 DATABRICKS CLOUD DETECTED: FORCING PRODUCTION SETTINGS (MOCK MODE KILLED)")
+    print("[BOOT] Production mode set")
 
-"""
-Unified Talent Management Hub - FastAPI Backend
-Powered by Databricks + Thomas International
-"""
-
-import sys
-
-# Now do regular imports
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from contextlib import asynccontextmanager
-import logging
-import traceback
 
 # Configure logging
 logging.basicConfig(
@@ -33,95 +29,108 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+print("[BOOT] FastAPI imported")
+
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+print(f"[BOOT] Path updated, trying imports...")
 
-from backend.routers import recruitment, performance, analytics, ai_insights, system
-from config import is_local_mode, is_databricks_app
+try:
+    from backend.routers import recruitment, performance, analytics, ai_insights, system
+    print("[BOOT] Routers imported")
+except Exception as e:
+    print(f"[BOOT] Router import failed: {e}")
 
-# Check if we have a built frontend
-STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
-HAS_STATIC = os.path.exists(STATIC_DIR) and os.path.exists(os.path.join(STATIC_DIR, "index.html"))
+try:
+    from config import is_local_mode, is_databricks_app
+    print(f"[BOOT] Config imported: is_databricks_app={is_databricks_app()}")
+except Exception as e:
+    print(f"[BOOT] Config import failed: {e}")
+    is_local_mode = lambda: True
+    is_databricks_app = lambda: False
+
+# Find static files
+_base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+STATIC_DIR = os.path.join(_base_dir, "frontend", "dist")
+_assets_dir = os.path.join(STATIC_DIR, "assets")
+_index_html = os.path.join(STATIC_DIR, "index.html")
+
+HAS_STATIC = os.path.exists(_index_html) and os.path.isdir(_assets_dir)
+print(f"[BOOT] STATIC_DIR={STATIC_DIR}, HAS_STATIC={HAS_STATIC}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events"""
-    # Determine runtime mode
+    print("[LIFESPAN] Starting up...")
+    
     if is_databricks_app():
-        mode_str = "🚀 STARTING IN PRODUCTION MODE (Managed Identity)"
-        app_name = os.getenv("DATABRICKS_APP_NAME", "unknown")
-        print(mode_str)
-        print(f"   App Name: {app_name}")
+        print("[LIFESPAN] PRODUCTION MODE (Managed Identity)")
+        print(f"[LIFESPAN] App Name: {os.getenv('DATABRICKS_APP_NAME', 'unknown')}")
     elif is_local_mode():
-        print("🚀 Starting IFS Talent Hub API (Powered by Thomas International)")
-        print("   Mode: Local (Mock Data)")
+        print("[LIFESPAN] LOCAL MODE (Mock Data)")
     else:
-        print("🚀 Starting IFS Talent Hub API (Powered by Thomas International)")
-        print("   Mode: Databricks Connected (Token Auth)")
+        print("[LIFESPAN] DATABRICKS MODE (Token Auth)")
     
-    print(f"   Static Files: {'Enabled' if HAS_STATIC else 'Disabled (development mode)'}")
+    print(f"[LIFESPAN] Static Files: {'Enabled' if HAS_STATIC else 'Disabled'}")
     
-    # Warm up Databricks SQL Warehouse
-    if not is_local_mode():
-        try:
-            from backend.services.databricks_ai import get_databricks_ai_service
-            ai_service = get_databricks_ai_service()
-            print("   ⏳ Warming up Databricks SQL Warehouse...")
-            if ai_service.warmup():
-                print("   ✅ SQL Warehouse warmed up successfully")
-            else:
-                print("   ⚠️  SQL Warehouse warmup failed - will use fallback")
-        except Exception as e:
-            print(f"   ⚠️  Warmup error: {e}")
+    # Skip warmup in this debug version
+    # if not is_local_mode():
+    #     try:
+    #         from backend.services.databricks_ai import get_databricks_ai_service
+    #         ai_service = get_databricks_ai_service()
+    #         if ai_service.warmup():
+    #             print("[LIFESPAN] SQL Warehouse warmed up")
+    #     except Exception as e:
+    #         print(f"[LIFESPAN] Warmup error: {e}")
     
     yield
-    print("👋 Shutting down API")
+    print("[LIFESPAN] Shutting down...")
 
 
 app = FastAPI(
     title="Unified Talent Management Hub",
-    description="Predictive insights for recruiting and performance management powered by Thomas International psychometric data",
+    description="Powered by Thomas International + Databricks AI",
     version="1.0.0",
     lifespan=lifespan,
 )
 
-# CORS middleware for React frontend
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:5173", "*"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# Global exception handler to prevent crashes
+# Global exception handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """Catch all unhandled exceptions to prevent app crashes"""
     error_id = id(exc)
     logger.error(f"Unhandled exception [{error_id}]: {type(exc).__name__}: {str(exc)}")
     logger.error(f"Request: {request.method} {request.url}")
-    logger.error(traceback.format_exc())
+    logger.error(tb.format_exc())
     
-    # Return a safe error response instead of crashing
     return JSONResponse(
         status_code=500,
         content={
             "error": "Internal server error",
             "error_id": str(error_id),
-            "message": str(exc) if not is_local_mode() else f"{type(exc).__name__}: {str(exc)}",
-            "recovery": "The request failed but the application is still running. Please try again."
+            "message": str(exc),
         }
     )
 
-# Include API routers
-app.include_router(recruitment.router, prefix="/api/recruitment", tags=["Recruitment"])
-app.include_router(performance.router, prefix="/api/performance", tags=["Performance"])
-app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
-app.include_router(ai_insights.router, prefix="/api/ai", tags=["AI Insights"])
-app.include_router(system.router, prefix="/api/system", tags=["System"])
+# Include routers
+try:
+    app.include_router(recruitment.router, prefix="/api/recruitment", tags=["Recruitment"])
+    app.include_router(performance.router, prefix="/api/performance", tags=["Performance"])
+    app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
+    app.include_router(ai_insights.router, prefix="/api/ai", tags=["AI Insights"])
+    app.include_router(system.router, prefix="/api/system", tags=["System"])
+    print("[BOOT] Routers registered")
+except Exception as e:
+    print(f"[BOOT] Router registration failed: {e}")
 
 
 @app.get("/api")
@@ -130,42 +139,35 @@ async def api_root():
         "name": "Unified Talent Management Hub API",
         "version": "1.0.0",
         "status": "running",
-        "mode": "local" if is_local_mode() else "databricks",
+        "mode": "databricks" if is_databricks_app() else ("local" if is_local_mode() else "token"),
     }
 
 
 @app.get("/api/health")
-async def health_check():
-    return {"status": "healthy"}
+async def health():
+    return {"status": "ok"}
 
 
-# Serve static files and SPA routing if frontend is built
+# Static file serving
 if HAS_STATIC:
-    # Mount static assets (JS, CSS, images)
-    app.mount("/assets", StaticFiles(directory=os.path.join(STATIC_DIR, "assets")), name="assets")
+    print("[BOOT] Mounting static files...")
+    try:
+        app.mount("/assets", StaticFiles(directory=_assets_dir), name="assets")
+        print("[BOOT] Static files mounted")
+    except Exception as e:
+        print(f"[BOOT] Failed to mount static files: {e}")
     
-    # Catch-all route for SPA - must be last
     @app.get("/{full_path:path}")
     async def serve_spa(request: Request, full_path: str):
-        """Serve the React SPA for all non-API routes"""
-        # Don't intercept API calls
         if full_path.startswith("api/"):
             return {"error": "Not found"}
         
-        # Check if it's a static file request
         static_file = os.path.join(STATIC_DIR, full_path)
         if os.path.isfile(static_file):
             return FileResponse(static_file)
         
-        # Otherwise serve index.html for SPA routing
-        return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+        return FileResponse(_index_html)
 else:
     @app.get("/")
     async def root():
-        return {
-            "name": "Unified Talent Management Hub",
-            "version": "1.0.0",
-            "status": "running",
-            "mode": "local" if is_local_mode() else "databricks",
-            "note": "Frontend not built. Run 'npm run build' in frontend directory.",
-        }
+        return {"message": "API only mode - no static files", "static_dir": STATIC_DIR}

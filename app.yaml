@@ -1,26 +1,18 @@
 # Databricks App Configuration
 # IFS Talent Hub - Powered by Thomas International
 
-name: thomas-talent-hub
-description: "IFS Talent Hub - Unified Talent Management powered by Thomas International psychometrics and Databricks AI"
-
-# App entrypoint
 command: ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
-# Environment variables
 env:
   - name: DATABRICKS_MODEL_ENDPOINT
     value: "databricks-gemini-2-5-flash"
   - name: LOG_LEVEL
     value: "DEBUG"
-  # CRITICAL: Prevent Python from using cached bytecode - forces fresh code execution
   - name: PYTHONDONTWRITEBYTECODE
     value: "1"
   - name: PYTHONUNBUFFERED
     value: "1"
 
-# CRITICAL: Define resources the app needs access to
-# This whitelists the serving endpoint for the app's managed identity
 resources:
   - name: "ask_thom_llm"
     serving_endpoint:
