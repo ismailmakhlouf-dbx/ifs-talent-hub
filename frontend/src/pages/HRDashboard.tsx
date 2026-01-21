@@ -11,21 +11,14 @@ import {
   Briefcase,
   DollarSign,
   UserCheck,
-  UserMinus,
-  Zap,
   BarChart2,
   PieChart as PieChartIcon,
   Activity,
   Sparkles,
-  Brain,
-  Shield,
   CheckCircle2,
-  ArrowRight,
-  Calendar
+  ArrowRight
 } from 'lucide-react'
 import { 
-  AreaChart, 
-  Area, 
   BarChart, 
   Bar, 
   XAxis, 
@@ -38,9 +31,10 @@ import {
   PieChart, 
   Pie, 
   Cell,
-  Legend
+  Area
 } from 'recharts'
 import { usePageContext } from '../contexts/PageContext'
+import clsx from 'clsx'
 
 // Real HR metrics data
 const retentionTrend = [
@@ -85,12 +79,12 @@ const churnRiskBreakdown = [
 ]
 
 const monthlyHires = [
-  { month: 'Jul', hires: 12, terminations: 8, netGrowth: 4 },
-  { month: 'Aug', hires: 15, terminations: 6, netGrowth: 9 },
-  { month: 'Sep', hires: 18, terminations: 7, netGrowth: 11 },
-  { month: 'Oct', hires: 14, terminations: 5, netGrowth: 9 },
-  { month: 'Nov', hires: 22, terminations: 9, netGrowth: 13 },
-  { month: 'Dec', hires: 8, terminations: 4, netGrowth: 4 },
+  { month: 'Jul', hires: 12, terminations: 8 },
+  { month: 'Aug', hires: 15, terminations: 6 },
+  { month: 'Sep', hires: 18, terminations: 7 },
+  { month: 'Oct', hires: 14, terminations: 5 },
+  { month: 'Nov', hires: 22, terminations: 9 },
+  { month: 'Dec', hires: 8, terminations: 4 },
 ]
 
 const TIME_RANGES = ['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Year to Date']
@@ -111,31 +105,32 @@ export default function HRDashboard() {
   }, [setPageContext])
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white p-8">
+    <div className="min-h-screen bg-[#F8F9FC] p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-thomas-orange to-thomas-pink flex items-center justify-center">
                 <BarChart2 className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-2xl font-display font-bold">HR Executive Dashboard</h1>
+              <h1 className="text-2xl font-display font-bold text-thomas-slate">HR Executive Dashboard</h1>
             </div>
-            <p className="text-slate-400 text-sm">Thomas International + GenAI Workforce Impact for IFS</p>
+            <p className="text-slate-500 text-sm">Thomas International + GenAI Workforce Impact for IFS</p>
           </div>
           
           {/* Time Range Selector */}
-          <div className="flex items-center gap-2 bg-white/5 rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-white rounded-xl p-1 shadow-sm border border-slate-200">
             {TIME_RANGES.map((range) => (
               <button
                 key={range}
                 onClick={() => setSelectedRange(range)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={clsx(
+                  'px-4 py-2 rounded-lg text-sm font-medium transition-all',
                   selectedRange === range 
-                    ? 'bg-thomas-orange text-white' 
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`}
+                    ? 'bg-thomas-orange text-white shadow-sm' 
+                    : 'text-slate-500 hover:text-thomas-slate hover:bg-slate-50'
+                )}
               >
                 {range}
               </button>
@@ -144,16 +139,16 @@ export default function HRDashboard() {
         </div>
 
         {/* Powered by Banner */}
-        <div className="mb-6 bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl p-4 border border-purple-500/20 flex items-center justify-between">
+        <div className="mb-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Sparkles className="w-5 h-5 text-purple-400" />
+            <Sparkles className="w-5 h-5 text-purple-500" />
             <div>
-              <span className="font-semibold text-purple-300">Powered by Thomas International + Databricks AI</span>
-              <p className="text-xs text-purple-400/70">Real-time analytics with Mosaic AI and psychometric insights</p>
+              <span className="font-semibold text-purple-700">Powered by Thomas International + Databricks AI</span>
+              <p className="text-xs text-purple-500">Real-time analytics with Mosaic AI and psychometric insights</p>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-lg text-purple-300 text-sm transition-colors">
-            <Brain className="w-4 h-4" />
+          <button className="flex items-center gap-2 px-4 py-2 bg-purple-100 hover:bg-purple-200 border border-purple-300 rounded-lg text-purple-700 text-sm transition-colors">
+            <Sparkles className="w-4 h-4" />
             Ask Thom
           </button>
         </div>
@@ -162,8 +157,8 @@ export default function HRDashboard() {
         <div className="grid grid-cols-4 gap-4 mb-6">
           <KPICard 
             icon={<Users className="w-5 h-5" />}
-            iconColor="text-cyan-400"
-            iconBg="bg-cyan-500/20"
+            iconColor="text-cyan-600"
+            iconBg="bg-cyan-100"
             value="2,847"
             change="+4.2%"
             positive={true}
@@ -172,8 +167,8 @@ export default function HRDashboard() {
           />
           <KPICard 
             icon={<TrendingDown className="w-5 h-5" />}
-            iconColor="text-green-400"
-            iconBg="bg-green-500/20"
+            iconColor="text-green-600"
+            iconBg="bg-green-100"
             value="8.2%"
             change="-34%"
             positive={true}
@@ -182,8 +177,8 @@ export default function HRDashboard() {
           />
           <KPICard 
             icon={<Clock className="w-5 h-5" />}
-            iconColor="text-orange-400"
-            iconBg="bg-orange-500/20"
+            iconColor="text-orange-600"
+            iconBg="bg-orange-100"
             value="18 days"
             change="-42%"
             positive={true}
@@ -192,8 +187,8 @@ export default function HRDashboard() {
           />
           <KPICard 
             icon={<DollarSign className="w-5 h-5" />}
-            iconColor="text-pink-400"
-            iconBg="bg-pink-500/20"
+            iconColor="text-pink-600"
+            iconBg="bg-pink-100"
             value="£4,200"
             change="-28%"
             positive={true}
@@ -205,21 +200,21 @@ export default function HRDashboard() {
         {/* Main Content Grid */}
         <div className="grid grid-cols-3 gap-6 mb-6">
           {/* Hiring Funnel */}
-          <div className="bg-white/5 backdrop-blur rounded-2xl p-6 border border-white/10">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-card">
             <div className="flex items-center gap-2 mb-4">
-              <Target className="w-4 h-4 text-cyan-400" />
-              <h3 className="font-semibold text-sm">Hiring Funnel</h3>
+              <Target className="w-4 h-4 text-cyan-600" />
+              <h3 className="font-semibold text-sm text-thomas-slate">Hiring Funnel</h3>
             </div>
-            <p className="text-xs text-slate-400 mb-4">Candidate journey with Thomas screening</p>
+            <p className="text-xs text-slate-500 mb-4">Candidate journey with Thomas screening</p>
             
             <div className="space-y-3">
               {hiringFunnel.map((stage, i) => (
                 <div key={i}>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-300">{stage.stage}</span>
-                    <span className="text-slate-400">{stage.count.toLocaleString()} <span className="text-slate-500">({stage.rate}%)</span></span>
+                    <span className="text-slate-600">{stage.stage}</span>
+                    <span className="text-slate-500">{stage.count.toLocaleString()} <span className="text-slate-400">({stage.rate}%)</span></span>
                   </div>
-                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all"
                       style={{ width: `${stage.rate}%` }}
@@ -229,73 +224,74 @@ export default function HRDashboard() {
               ))}
             </div>
             
-            <div className="mt-4 pt-4 border-t border-white/10 flex items-center gap-2 text-green-400">
+            <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-2 text-green-600">
               <CheckCircle2 className="w-4 h-4" />
               <span className="text-xs font-medium">3.1% application-to-hire rate</span>
-              <span className="text-xs text-slate-500">(2.1x industry avg)</span>
+              <span className="text-xs text-slate-400">(2.1x industry avg)</span>
             </div>
           </div>
 
           {/* Retention Trend */}
-          <div className="col-span-2 bg-white/5 backdrop-blur rounded-2xl p-6 border border-white/10">
+          <div className="col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-card">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-green-400" />
-                <h3 className="font-semibold text-sm">Retention Rate Trend</h3>
+                <Activity className="w-4 h-4 text-green-600" />
+                <h3 className="font-semibold text-sm text-thomas-slate">Retention Rate Trend</h3>
               </div>
               <div className="flex items-center gap-4 text-xs">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="text-slate-400">Retention %</span>
+                  <span className="text-slate-500">Retention %</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-orange-500" />
-                  <span className="text-slate-400">AI Interventions</span>
+                  <span className="text-slate-500">AI Interventions</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-slate-500" />
-                  <span className="text-slate-400">Industry Benchmark</span>
+                  <div className="w-2 h-2 rounded-full bg-slate-400" />
+                  <span className="text-slate-500">Industry Benchmark</span>
                 </div>
               </div>
             </div>
-            <p className="text-xs text-slate-400 mb-4">Monthly retention with Thomas-powered early intervention</p>
+            <p className="text-xs text-slate-500 mb-4">Monthly retention with Thomas-powered early intervention</p>
             
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={200}>
               <ComposedChart data={retentionTrend}>
                 <defs>
-                  <linearGradient id="retentionGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
+                  <linearGradient id="retentionGradientLight" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2}/>
                     <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} stroke="#ffffff10" />
-                <YAxis yAxisId="left" domain={[75, 100]} tick={{ fontSize: 11, fill: '#94a3b8' }} stroke="#ffffff10" />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: '#94a3b8' }} stroke="#ffffff10" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748b' }} stroke="#e2e8f0" />
+                <YAxis yAxisId="left" domain={[75, 100]} tick={{ fontSize: 11, fill: '#64748b' }} stroke="#e2e8f0" />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: '#64748b' }} stroke="#e2e8f0" />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: '#1e1e2e', 
-                    border: '1px solid #ffffff20',
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e2e8f0',
                     borderRadius: 8,
-                    fontSize: 11 
+                    fontSize: 11,
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                   }}
                 />
-                <Area yAxisId="left" type="monotone" dataKey="retention" stroke="#22c55e" fill="url(#retentionGradient)" strokeWidth={2} />
-                <Line yAxisId="left" type="monotone" dataKey="benchmark" stroke="#64748b" strokeDasharray="5 5" dot={false} />
+                <Area yAxisId="left" type="monotone" dataKey="retention" stroke="#22c55e" fill="url(#retentionGradientLight)" strokeWidth={2} />
+                <Line yAxisId="left" type="monotone" dataKey="benchmark" stroke="#94a3b8" strokeDasharray="5 5" dot={false} />
                 <Bar yAxisId="right" dataKey="interventions" fill="#f97316" radius={[4, 4, 0, 0]} barSize={20} />
               </ComposedChart>
             </ResponsiveContainer>
             
-            <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/10">
-              <div className="bg-green-500/10 rounded-lg p-3">
-                <p className="text-xs text-green-400 mb-1">Current Retention</p>
-                <p className="text-xl font-bold text-green-400">92%</p>
-                <p className="text-[10px] text-slate-500">+10pp vs 6 months ago</p>
+            <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100">
+              <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                <p className="text-xs text-green-600 mb-1">Current Retention</p>
+                <p className="text-xl font-bold text-green-700">92%</p>
+                <p className="text-[10px] text-green-500">+10pp vs 6 months ago</p>
               </div>
-              <div className="bg-orange-500/10 rounded-lg p-3">
-                <p className="text-xs text-orange-400 mb-1">Interventions Triggered</p>
-                <p className="text-xl font-bold text-orange-400">106</p>
-                <p className="text-[10px] text-slate-500">73% success rate</p>
+              <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
+                <p className="text-xs text-orange-600 mb-1">Interventions Triggered</p>
+                <p className="text-xl font-bold text-orange-700">106</p>
+                <p className="text-[10px] text-orange-500">73% success rate</p>
               </div>
             </div>
           </div>
@@ -304,25 +300,25 @@ export default function HRDashboard() {
         {/* Secondary Metrics Row */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           <SecondaryMetric 
-            icon={<UserCheck className="w-4 h-4 text-green-400" />}
+            icon={<UserCheck className="w-4 h-4 text-green-600" />}
             label="Quality of Hire"
             value="94%"
             detail="Thomas-screened hires meeting expectations at 12 months"
           />
           <SecondaryMetric 
-            icon={<Award className="w-4 h-4 text-yellow-400" />}
+            icon={<Award className="w-4 h-4 text-yellow-600" />}
             label="Internal Promotions"
             value="156"
             detail="Predicted leadership-ready employees promoted YTD"
           />
           <SecondaryMetric 
-            icon={<AlertTriangle className="w-4 h-4 text-red-400" />}
+            icon={<AlertTriangle className="w-4 h-4 text-red-500" />}
             label="Churn Risks Flagged"
             value="43"
             detail="Early intervention enabled before resignation"
           />
           <SecondaryMetric 
-            icon={<Heart className="w-4 h-4 text-pink-400" />}
+            icon={<Heart className="w-4 h-4 text-pink-500" />}
             label="eNPS Score"
             value="+47"
             detail="Employee Net Promoter Score (industry avg: +12)"
@@ -332,20 +328,20 @@ export default function HRDashboard() {
         {/* Charts Row */}
         <div className="grid grid-cols-3 gap-6 mb-6">
           {/* Headcount Movement */}
-          <div className="bg-white/5 backdrop-blur rounded-2xl p-6 border border-white/10">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-card">
             <div className="flex items-center gap-2 mb-4">
-              <Users className="w-4 h-4 text-blue-400" />
-              <h3 className="font-semibold text-sm">Headcount Movement</h3>
+              <Users className="w-4 h-4 text-blue-600" />
+              <h3 className="font-semibold text-sm text-thomas-slate">Headcount Movement</h3>
             </div>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={monthlyHires}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-                <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#94a3b8' }} stroke="#ffffff10" />
-                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} stroke="#ffffff10" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#64748b' }} stroke="#e2e8f0" />
+                <YAxis tick={{ fontSize: 10, fill: '#64748b' }} stroke="#e2e8f0" />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: '#1e1e2e', 
-                    border: '1px solid #ffffff20',
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e2e8f0',
                     borderRadius: 8,
                     fontSize: 11 
                   }}
@@ -354,27 +350,27 @@ export default function HRDashboard() {
                 <Bar dataKey="terminations" fill="#ef4444" radius={[4, 4, 0, 0]} name="Terminations" />
               </BarChart>
             </ResponsiveContainer>
-            <div className="flex items-center justify-center gap-2 mt-2 text-xs text-green-400">
+            <div className="flex items-center justify-center gap-2 mt-2 text-xs text-green-600">
               <TrendingUp className="w-3 h-3" />
               <span>+50 net headcount growth (6 months)</span>
             </div>
           </div>
 
           {/* Performance Distribution */}
-          <div className="bg-white/5 backdrop-blur rounded-2xl p-6 border border-white/10">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-card">
             <div className="flex items-center gap-2 mb-4">
-              <PieChartIcon className="w-4 h-4 text-purple-400" />
-              <h3 className="font-semibold text-sm">Performance Distribution</h3>
+              <PieChartIcon className="w-4 h-4 text-purple-600" />
+              <h3 className="font-semibold text-sm text-thomas-slate">Performance Distribution</h3>
             </div>
             <div className="flex justify-center">
-              <ResponsiveContainer width={160} height={160}>
+              <ResponsiveContainer width={140} height={140}>
                 <PieChart>
                   <Pie
                     data={assessmentDistribution}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={70}
+                    innerRadius={40}
+                    outerRadius={60}
                     dataKey="value"
                     stroke="none"
                   >
@@ -389,28 +385,28 @@ export default function HRDashboard() {
               {assessmentDistribution.map((item, i) => (
                 <div key={i} className="flex items-center gap-1.5 text-xs">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-slate-400">{item.name}</span>
-                  <span className="text-white ml-auto">{item.value}%</span>
+                  <span className="text-slate-500">{item.name}</span>
+                  <span className="text-thomas-slate font-medium ml-auto">{item.value}%</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Churn Risk */}
-          <div className="bg-white/5 backdrop-blur rounded-2xl p-6 border border-white/10">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-card">
             <div className="flex items-center gap-2 mb-4">
-              <AlertTriangle className="w-4 h-4 text-orange-400" />
-              <h3 className="font-semibold text-sm">Churn Risk Distribution</h3>
+              <AlertTriangle className="w-4 h-4 text-orange-600" />
+              <h3 className="font-semibold text-sm text-thomas-slate">Churn Risk Distribution</h3>
             </div>
             <div className="flex justify-center">
-              <ResponsiveContainer width={160} height={160}>
+              <ResponsiveContainer width={140} height={140}>
                 <PieChart>
                   <Pie
                     data={churnRiskBreakdown}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={70}
+                    innerRadius={40}
+                    outerRadius={60}
                     dataKey="value"
                     stroke="none"
                   >
@@ -425,9 +421,9 @@ export default function HRDashboard() {
               {churnRiskBreakdown.map((item, i) => (
                 <div key={i} className="flex items-center gap-2 text-xs">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-slate-400">{item.name}</span>
-                  <span className="text-white ml-auto">{item.value}%</span>
-                  <span className="text-slate-500">({Math.round(2847 * item.value / 100)})</span>
+                  <span className="text-slate-500">{item.name}</span>
+                  <span className="text-thomas-slate font-medium ml-auto">{item.value}%</span>
+                  <span className="text-slate-400">({Math.round(2847 * item.value / 100)})</span>
                 </div>
               ))}
             </div>
@@ -435,58 +431,58 @@ export default function HRDashboard() {
         </div>
 
         {/* Department Health Table */}
-        <div className="bg-white/5 backdrop-blur rounded-2xl p-6 border border-white/10 mb-6">
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-card mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Briefcase className="w-4 h-4 text-blue-400" />
-              <h3 className="font-semibold text-sm">Department Health Overview</h3>
+              <Briefcase className="w-4 h-4 text-blue-600" />
+              <h3 className="font-semibold text-sm text-thomas-slate">Department Health Overview</h3>
             </div>
             <span className="text-xs text-slate-400">Powered by Thomas Assessments</span>
           </div>
           
-          <div className="overflow-hidden rounded-xl border border-white/10">
+          <div className="overflow-hidden rounded-xl border border-slate-200">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-white/5">
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium text-xs">Department</th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium text-xs">Headcount</th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium text-xs">Turnover %</th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium text-xs">Engagement</th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium text-xs">Chemistry Score</th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium text-xs">Status</th>
+                <tr className="bg-slate-50">
+                  <th className="text-left py-3 px-4 text-slate-500 font-medium text-xs">Department</th>
+                  <th className="text-right py-3 px-4 text-slate-500 font-medium text-xs">Headcount</th>
+                  <th className="text-right py-3 px-4 text-slate-500 font-medium text-xs">Turnover %</th>
+                  <th className="text-right py-3 px-4 text-slate-500 font-medium text-xs">Engagement</th>
+                  <th className="text-right py-3 px-4 text-slate-500 font-medium text-xs">Chemistry Score</th>
+                  <th className="text-right py-3 px-4 text-slate-500 font-medium text-xs">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {departmentHealth.map((dept, i) => (
-                  <tr key={i} className="border-t border-white/5 hover:bg-white/5 transition-colors">
-                    <td className="py-3 px-4 font-medium">{dept.name}</td>
-                    <td className="py-3 px-4 text-right text-slate-300">{dept.employees}</td>
+                  <tr key={i} className="border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td className="py-3 px-4 font-medium text-thomas-slate">{dept.name}</td>
+                    <td className="py-3 px-4 text-right text-slate-600">{dept.employees}</td>
                     <td className="py-3 px-4 text-right">
-                      <span className={dept.turnover > 10 ? 'text-red-400' : dept.turnover > 7 ? 'text-yellow-400' : 'text-green-400'}>
+                      <span className={dept.turnover > 10 ? 'text-red-500' : dept.turnover > 7 ? 'text-yellow-600' : 'text-green-600'}>
                         {dept.turnover}%
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                        <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                           <div 
                             className={`h-full rounded-full ${dept.engagement >= 85 ? 'bg-green-500' : dept.engagement >= 80 ? 'bg-yellow-500' : 'bg-red-500'}`}
                             style={{ width: `${dept.engagement}%` }}
                           />
                         </div>
-                        <span className="text-slate-300 w-8">{dept.engagement}%</span>
+                        <span className="text-slate-600 w-8">{dept.engagement}%</span>
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <span className={dept.chemistryScore >= 88 ? 'text-green-400' : dept.chemistryScore >= 85 ? 'text-blue-400' : 'text-yellow-400'}>
+                      <span className={dept.chemistryScore >= 88 ? 'text-green-600' : dept.chemistryScore >= 85 ? 'text-blue-600' : 'text-yellow-600'}>
                         {dept.chemistryScore}%
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right">
                       <span className={`px-2 py-1 rounded-full text-xs ${
-                        dept.turnover < 6 ? 'bg-green-500/20 text-green-400' : 
-                        dept.turnover < 10 ? 'bg-yellow-500/20 text-yellow-400' : 
-                        'bg-red-500/20 text-red-400'
+                        dept.turnover < 6 ? 'bg-green-100 text-green-700' : 
+                        dept.turnover < 10 ? 'bg-yellow-100 text-yellow-700' : 
+                        'bg-red-100 text-red-700'
                       }`}>
                         {dept.turnover < 6 ? 'Healthy' : dept.turnover < 10 ? 'Monitor' : 'At Risk'}
                       </span>
@@ -499,10 +495,10 @@ export default function HRDashboard() {
         </div>
 
         {/* GenAI Impact Summary */}
-        <div className="bg-gradient-to-r from-thomas-orange/10 to-thomas-pink/10 rounded-2xl p-6 border border-thomas-orange/20 mb-6">
+        <div className="bg-gradient-to-r from-orange-50 to-pink-50 rounded-2xl p-6 border border-thomas-orange/20 mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-5 h-5 text-thomas-orange" />
-            <h3 className="font-semibold">GenAI-Powered Insights Impact</h3>
+            <h3 className="font-semibold text-thomas-slate">GenAI-Powered Insights Impact</h3>
           </div>
           
           <div className="grid grid-cols-6 gap-4">
@@ -516,35 +512,35 @@ export default function HRDashboard() {
         </div>
 
         {/* ROI Summary */}
-        <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 rounded-2xl p-6 border border-purple-500/20">
+        <div className="bg-gradient-to-r from-thomas-orange to-thomas-pink rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="font-semibold text-lg">Thomas + Databricks AI ROI Summary</h3>
-            <button className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition-colors">
+            <h3 className="font-semibold text-lg text-white">Thomas + Databricks AI ROI Summary</h3>
+            <button className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm transition-colors">
               Export Report
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
           
           <div className="grid grid-cols-4 gap-6">
-            <div className="bg-white/5 rounded-xl p-4">
-              <p className="text-slate-400 text-xs mb-1">Platform Investment</p>
-              <p className="text-2xl font-bold">£180K</p>
-              <p className="text-[10px] text-slate-500 mt-1">Annual license + implementation</p>
+            <div className="bg-white/10 rounded-xl p-4">
+              <p className="text-white/70 text-xs mb-1">Platform Investment</p>
+              <p className="text-2xl font-bold text-white">£180K</p>
+              <p className="text-[10px] text-white/60 mt-1">Annual license + implementation</p>
             </div>
-            <div className="bg-white/5 rounded-xl p-4">
-              <p className="text-slate-400 text-xs mb-1">Annual Savings</p>
-              <p className="text-2xl font-bold text-green-400">£2.8M</p>
-              <p className="text-[10px] text-slate-500 mt-1">Churn reduction + efficiency gains</p>
+            <div className="bg-white/10 rounded-xl p-4">
+              <p className="text-white/70 text-xs mb-1">Annual Savings</p>
+              <p className="text-2xl font-bold text-white">£2.8M</p>
+              <p className="text-[10px] text-white/60 mt-1">Churn reduction + efficiency gains</p>
             </div>
-            <div className="bg-white/5 rounded-xl p-4">
-              <p className="text-slate-400 text-xs mb-1">Payback Period</p>
-              <p className="text-2xl font-bold text-cyan-400">23 days</p>
-              <p className="text-[10px] text-slate-500 mt-1">Time to positive ROI</p>
+            <div className="bg-white/10 rounded-xl p-4">
+              <p className="text-white/70 text-xs mb-1">Payback Period</p>
+              <p className="text-2xl font-bold text-white">23 days</p>
+              <p className="text-[10px] text-white/60 mt-1">Time to positive ROI</p>
             </div>
-            <div className="bg-white/5 rounded-xl p-4">
-              <p className="text-slate-400 text-xs mb-1">Annual ROI</p>
-              <p className="text-2xl font-bold text-thomas-orange">1,456%</p>
-              <p className="text-[10px] text-slate-500 mt-1">Return on investment</p>
+            <div className="bg-white/10 rounded-xl p-4">
+              <p className="text-white/70 text-xs mb-1">Annual ROI</p>
+              <p className="text-2xl font-bold text-white">1,456%</p>
+              <p className="text-[10px] text-white/60 mt-1">Return on investment</p>
             </div>
           </div>
         </div>
@@ -574,19 +570,19 @@ function KPICard({
   subtext: string
 }) {
   return (
-    <div className="bg-white/5 backdrop-blur rounded-2xl p-5 border border-white/10">
+    <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-card">
       <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center ${iconColor} mb-3`}>
         {icon}
       </div>
       <div className="flex items-end gap-2 mb-1">
-        <span className="text-2xl font-bold">{value}</span>
-        <span className={`text-sm font-semibold flex items-center gap-0.5 mb-0.5 ${positive ? 'text-green-400' : 'text-red-400'}`}>
+        <span className="text-2xl font-bold text-thomas-slate">{value}</span>
+        <span className={`text-sm font-semibold flex items-center gap-0.5 mb-0.5 ${positive ? 'text-green-600' : 'text-red-500'}`}>
           {positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
           {change}
         </span>
       </div>
-      <p className="text-sm text-slate-400">{label}</p>
-      <p className="text-xs text-slate-500 mt-1">{subtext}</p>
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className="text-xs text-slate-400 mt-1">{subtext}</p>
     </div>
   )
 }
@@ -604,13 +600,13 @@ function SecondaryMetric({
   detail: string
 }) {
   return (
-    <div className="bg-white/5 backdrop-blur rounded-xl p-4 border border-white/10">
+    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-card">
       <div className="flex items-center gap-2 mb-2">
         {icon}
-        <span className="text-xs text-slate-400">{label}</span>
+        <span className="text-xs text-slate-500">{label}</span>
       </div>
-      <p className="text-xl font-bold">{value}</p>
-      <p className="text-[10px] text-slate-500 mt-1">{detail}</p>
+      <p className="text-xl font-bold text-thomas-slate">{value}</p>
+      <p className="text-[10px] text-slate-400 mt-1">{detail}</p>
     </div>
   )
 }
@@ -626,10 +622,10 @@ function ImpactMetric({
   detail: string
 }) {
   return (
-    <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-      <p className="text-[10px] text-slate-400 mb-1">{label}</p>
-      <p className="text-lg font-bold">{value}</p>
-      <p className="text-[9px] text-slate-500">{detail}</p>
+    <div className="bg-white rounded-xl p-3 border border-slate-200">
+      <p className="text-[10px] text-slate-500 mb-1">{label}</p>
+      <p className="text-lg font-bold text-thomas-slate">{value}</p>
+      <p className="text-[9px] text-slate-400">{detail}</p>
     </div>
   )
 }

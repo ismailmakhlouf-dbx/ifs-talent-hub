@@ -987,24 +987,63 @@ COMMENT '${table.description}';
     })
 
     if (exportFormat === 'sql') {
-      // Add sample INSERT statements for data hydration
+      // Add real INSERT statements for data hydration
       sql += `-- ============================================================================
--- SAMPLE DATA HYDRATION
--- Uncomment and modify to populate tables with initial data
+-- SAMPLE DATA - Ready to execute
 -- ============================================================================
 
--- Sample employees
-/*
-INSERT INTO employees VALUES
-  ('EMP-1000', 'Marcus Chen', 'marcus.chen@ifs.com', 'Engineering', 'VP Engineering', NULL, '2019-06-15', 'Stockholm, Sweden', 2500000.00, 'SEK', 'Active', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP()),
-  ('EMP-1001', 'Sarah Mitchell', 'sarah.mitchell@ifs.com', 'Engineering', 'Senior Software Engineer', 'EMP-1000', '2022-03-15', 'London, UK', 95000.00, 'GBP', 'Active', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP());
-*/
+-- Employees (10 sample records)
+INSERT INTO employees (employee_id, full_name, email, department, title, manager_id, hire_date, location, salary, currency, status, created_at, updated_at) VALUES
+  ('EMP-1000', 'Marcus Chen', 'marcus.chen@ifs.com', 'Engineering', 'VP Engineering', NULL, '2019-06-15', 'Stockholm, Sweden', 2500000.00, 'SEK', 'Active', '2019-06-15T09:00:00Z', '2024-01-15T14:30:00Z'),
+  ('EMP-1001', 'Sarah Mitchell', 'sarah.mitchell@ifs.com', 'Engineering', 'Senior Software Engineer', 'EMP-1000', '2022-03-15', 'London, UK', 95000.00, 'GBP', 'Active', '2022-03-15T09:00:00Z', '2024-01-15T14:30:00Z'),
+  ('EMP-1002', 'David Guzman', 'david.guzman@ifs.com', 'Sales', 'Sales Director', NULL, '2020-01-10', 'New York, USA', 180000.00, 'USD', 'Active', '2020-01-10T09:00:00Z', '2024-01-15T14:30:00Z'),
+  ('EMP-1003', 'Elena Rodriguez', 'elena.rodriguez@ifs.com', 'Product', 'Product Manager', NULL, '2021-05-20', 'Madrid, Spain', 75000.00, 'EUR', 'Active', '2021-05-20T09:00:00Z', '2024-01-15T14:30:00Z'),
+  ('EMP-1004', 'James Wilson', 'james.wilson@ifs.com', 'Engineering', 'DevOps Engineer', 'EMP-1000', '2023-02-01', 'London, UK', 85000.00, 'GBP', 'Active', '2023-02-01T09:00:00Z', '2024-01-15T14:30:00Z'),
+  ('EMP-1005', 'Anna Kowalski', 'anna.kowalski@ifs.com', 'HR', 'HR Business Partner', NULL, '2019-11-15', 'Stockholm, Sweden', 650000.00, 'SEK', 'Active', '2019-11-15T09:00:00Z', '2024-01-15T14:30:00Z'),
+  ('EMP-1006', 'Michael Brown', 'michael.brown@ifs.com', 'Sales', 'Account Executive', 'EMP-1002', '2022-08-10', 'Chicago, USA', 120000.00, 'USD', 'Active', '2022-08-10T09:00:00Z', '2024-01-15T14:30:00Z'),
+  ('EMP-1007', 'Sophie Martin', 'sophie.martin@ifs.com', 'Finance', 'Financial Analyst', NULL, '2021-09-01', 'Paris, France', 62000.00, 'EUR', 'Active', '2021-09-01T09:00:00Z', '2024-01-15T14:30:00Z'),
+  ('EMP-1008', 'Lars Andersson', 'lars.andersson@ifs.com', 'Engineering', 'Tech Lead', 'EMP-1000', '2020-04-15', 'Stockholm, Sweden', 1200000.00, 'SEK', 'Active', '2020-04-15T09:00:00Z', '2024-01-15T14:30:00Z'),
+  ('EMP-1009', 'Emma Thompson', 'emma.thompson@ifs.com', 'Operations', 'Operations Manager', NULL, '2018-07-20', 'London, UK', 78000.00, 'GBP', 'Active', '2018-07-20T09:00:00Z', '2024-01-15T14:30:00Z');
 
--- Sample Thomas assessments
-/*
-INSERT INTO thomas_assessments VALUES
-  ('ASSESS-001', 'EMP-1001', 'PPA', 72, 85, 45, 68, 127, 78, 65, 82, 71, 69, 75, CURRENT_TIMESTAMP());
-*/
+-- Thomas Assessments (PPA profiles for each employee)
+INSERT INTO thomas_assessments (assessment_id, employee_id, assessment_type, dominance, influence, steadiness, compliance, gia_score, hpti_conscientiousness, hpti_adjustment, hpti_curiosity, hpti_risk_approach, hpti_ambiguity_acceptance, hpti_competitiveness, assessed_at) VALUES
+  ('ASSESS-001', 'EMP-1000', 'PPA', 85, 72, 35, 58, 132, 82, 71, 88, 79, 74, 86, '2024-01-10T11:30:00Z'),
+  ('ASSESS-002', 'EMP-1001', 'PPA', 64, 71, 69, 74, 127, 78, 65, 82, 71, 69, 75, '2024-01-10T11:30:00Z'),
+  ('ASSESS-003', 'EMP-1002', 'PPA', 78, 89, 42, 51, 118, 68, 72, 74, 82, 65, 91, '2024-01-10T11:30:00Z'),
+  ('ASSESS-004', 'EMP-1003', 'PPA', 62, 78, 71, 69, 124, 75, 68, 86, 67, 78, 72, '2024-01-10T11:30:00Z'),
+  ('ASSESS-005', 'EMP-1004', 'PPA', 55, 48, 72, 85, 129, 88, 74, 79, 62, 71, 58, '2024-01-10T11:30:00Z'),
+  ('ASSESS-006', 'EMP-1005', 'PPA', 58, 82, 78, 62, 115, 72, 85, 68, 58, 82, 65, '2024-01-10T11:30:00Z'),
+  ('ASSESS-007', 'EMP-1006', 'PPA', 82, 91, 38, 45, 112, 65, 69, 72, 85, 71, 88, '2024-01-10T11:30:00Z'),
+  ('ASSESS-008', 'EMP-1007', 'PPA', 45, 52, 81, 88, 131, 91, 78, 75, 55, 68, 52, '2024-01-10T11:30:00Z'),
+  ('ASSESS-009', 'EMP-1008', 'PPA', 72, 65, 58, 75, 135, 85, 72, 91, 74, 79, 78, '2024-01-10T11:30:00Z'),
+  ('ASSESS-010', 'EMP-1009', 'PPA', 68, 74, 72, 66, 119, 78, 81, 71, 68, 75, 69, '2024-01-10T11:30:00Z');
+
+-- Performance Metrics (current quarter)
+INSERT INTO performance_metrics (metric_id, employee_id, period, performance_score, morale_score, churn_risk, churn_probability, leadership_readiness, slack_sentiment, goals_completed, goals_total, generated_at) VALUES
+  ('PERF-001', 'EMP-1000', 'Q4 2024', 92, 85, 'Low', 0.05, 95, 0.78, 12, 12, '2024-01-15T06:00:00Z'),
+  ('PERF-002', 'EMP-1001', 'Q4 2024', 87, 72, 'Low', 0.12, 78, 0.65, 8, 10, '2024-01-15T06:00:00Z'),
+  ('PERF-003', 'EMP-1002', 'Q4 2024', 78, 58, 'High', 0.42, 82, 0.35, 6, 10, '2024-01-15T06:00:00Z'),
+  ('PERF-004', 'EMP-1003', 'Q4 2024', 91, 88, 'Low', 0.08, 85, 0.82, 9, 10, '2024-01-15T06:00:00Z'),
+  ('PERF-005', 'EMP-1004', 'Q4 2024', 84, 76, 'Medium', 0.25, 45, 0.55, 7, 9, '2024-01-15T06:00:00Z'),
+  ('PERF-006', 'EMP-1005', 'Q4 2024', 89, 82, 'Low', 0.09, 72, 0.71, 8, 9, '2024-01-15T06:00:00Z'),
+  ('PERF-007', 'EMP-1006', 'Q4 2024', 72, 45, 'High', 0.58, 38, 0.22, 4, 10, '2024-01-15T06:00:00Z'),
+  ('PERF-008', 'EMP-1007', 'Q4 2024', 94, 91, 'Low', 0.04, 68, 0.88, 10, 10, '2024-01-15T06:00:00Z'),
+  ('PERF-009', 'EMP-1008', 'Q4 2024', 88, 79, 'Low', 0.11, 88, 0.68, 9, 11, '2024-01-15T06:00:00Z'),
+  ('PERF-010', 'EMP-1009', 'Q4 2024', 85, 74, 'Medium', 0.22, 75, 0.58, 7, 8, '2024-01-15T06:00:00Z');
+
+-- Team Chemistry (sample pairings)
+INSERT INTO team_chemistry (chemistry_id, employee_a_id, employee_b_id, chemistry_score, collaboration_style, interaction_note, calculated_at) VALUES
+  ('CHEM-001', 'EMP-1000', 'EMP-1001', 84, 'Complementary', 'High-D leader with balanced I/S report. Clear direction works well.', '2024-01-15T06:00:00Z'),
+  ('CHEM-002', 'EMP-1000', 'EMP-1008', 92, 'Synergistic', 'Both high-D with strong technical focus. Align on outcomes early.', '2024-01-15T06:00:00Z'),
+  ('CHEM-003', 'EMP-1001', 'EMP-1004', 78, 'Supportive', 'Similar profiles. May need external challenge. Pair on complex problems.', '2024-01-15T06:00:00Z'),
+  ('CHEM-004', 'EMP-1002', 'EMP-1006', 88, 'Dynamic', 'Both high-I sales profiles. Great for client-facing collaboration.', '2024-01-15T06:00:00Z'),
+  ('CHEM-005', 'EMP-1003', 'EMP-1001', 81, 'Balanced', 'Product-Engineering alignment. Schedule regular sync meetings.', '2024-01-15T06:00:00Z');
+
+-- Candidates (active pipeline)
+INSERT INTO candidates (candidate_id, full_name, email, role_id, status, cv_text, ai_summary, skills_extracted, experience_years, fit_score, thomas_ppa_completed, applied_at, updated_at) VALUES
+  ('CAND-001', 'Alex Johnson', 'alex.johnson@email.com', 'ROLE-001', 'Interview', 'Software engineer with 7 years experience...', 'Strong backend developer with Python/Go expertise. Leadership experience at Series B startup.', ARRAY('Python', 'Go', 'Kubernetes', 'PostgreSQL'), 7, 89, true, '2024-01-08T14:22:00Z', '2024-01-12T09:15:00Z'),
+  ('CAND-002', 'Maria Garcia', 'maria.garcia@email.com', 'ROLE-002', 'Screening', 'Sales professional with SaaS experience...', 'Enterprise sales background with ERP focus. Exceeded quota 5 consecutive quarters.', ARRAY('Enterprise Sales', 'SaaS', 'Salesforce', 'Solution Selling'), 9, 92, false, '2024-01-10T10:30:00Z', '2024-01-11T16:45:00Z'),
+  ('CAND-003', 'Thomas Weber', 'thomas.weber@email.com', 'ROLE-001', 'Offer', 'Full-stack developer specializing in React...', 'Excellent frontend skills with growing backend capabilities. Culture fit is strong.', ARRAY('React', 'TypeScript', 'Node.js', 'AWS'), 5, 85, true, '2024-01-02T08:00:00Z', '2024-01-14T11:00:00Z');
 
 `
     }
@@ -1073,7 +1112,7 @@ INSERT INTO thomas_assessments VALUES
   }
 
   return (
-    <div className="mt-8 bg-[#0D1117] rounded-2xl p-8 border border-white/10 text-white">
+    <div className="mt-8 bg-white rounded-2xl p-8 border border-slate-200 shadow-card">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
@@ -1081,21 +1120,21 @@ INSERT INTO thomas_assessments VALUES
             <Database className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="font-display font-bold text-xl">Unity Catalog Data Model</h3>
-            <code className="text-xs text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded">{dataModel.catalog}.{dataModel.schema}</code>
+            <h3 className="font-display font-bold text-xl text-thomas-slate">Unity Catalog Data Model</h3>
+            <code className="text-xs text-cyan-600 bg-cyan-100 px-2 py-0.5 rounded">{dataModel.catalog}.{dataModel.schema}</code>
           </div>
         </div>
         
         {/* Export Controls */}
         <div className="flex items-center gap-3">
-          <div className="flex bg-white/5 rounded-lg p-1">
+          <div className="flex bg-slate-100 rounded-lg p-1">
             {(['sql', 'schema', 'json'] as const).map((format) => (
               <button
                 key={format}
                 onClick={() => setExportFormat(format)}
                 className={clsx(
                   'px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1.5',
-                  exportFormat === format ? 'bg-cyan-500 text-white' : 'text-slate-400 hover:text-white'
+                  exportFormat === format ? 'bg-cyan-500 text-white' : 'text-slate-500 hover:text-thomas-slate'
                 )}
               >
                 {format === 'sql' && <><FileCode className="w-3 h-3" /> SQL + Data</>}
@@ -1106,77 +1145,77 @@ INSERT INTO thomas_assessments VALUES
           </div>
           <button
             onClick={downloadExport}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 rounded-lg text-white text-sm font-medium hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-thomas-orange to-thomas-pink rounded-lg text-white text-sm font-medium hover:opacity-90 transition-opacity"
           >
             <Download className="w-4 h-4" />
-            Export Schema
+            Export
           </button>
         </div>
       </div>
 
       {/* Ready for AI/BI Banner */}
-      <div className="mb-6 bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl p-4 border border-purple-500/20 flex items-center justify-between">
+      <div className="mb-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Sparkles className="w-5 h-5 text-purple-400" />
+          <Sparkles className="w-5 h-5 text-purple-500" />
           <div>
-            <span className="font-semibold text-purple-300">Ready for Databricks AI/BI</span>
-            <p className="text-xs text-purple-400/70">Optimized for Genie natural language queries and Lakeview dashboards</p>
+            <span className="font-semibold text-purple-700">Ready for Databricks AI/BI</span>
+            <p className="text-xs text-purple-500">Optimized for Genie natural language queries and Lakeview dashboards</p>
           </div>
         </div>
         <button 
           onClick={() => copyToClipboard(`${dataModel.catalog}.${dataModel.schema}`)}
-          className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 bg-purple-100 hover:bg-purple-200 border border-purple-300 rounded-lg text-sm text-purple-700 transition-colors"
         >
-          {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+          {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
           Copy Catalog Path
         </button>
       </div>
 
       {/* Schema Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-          <div className="flex items-center gap-2 text-slate-400 mb-1">
+        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+          <div className="flex items-center gap-2 text-slate-500 mb-1">
             <Table className="w-4 h-4" />
             <span className="text-xs">Tables</span>
           </div>
-          <p className="text-2xl font-bold">{dataModel.tables.length}</p>
+          <p className="text-2xl font-bold text-thomas-slate">{dataModel.tables.length}</p>
         </div>
-        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-          <div className="flex items-center gap-2 text-slate-400 mb-1">
+        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+          <div className="flex items-center gap-2 text-slate-500 mb-1">
             <Database className="w-4 h-4" />
             <span className="text-xs">Total Columns</span>
           </div>
-          <p className="text-2xl font-bold">{dataModel.tables.reduce((acc, t) => acc + t.columns.length, 0)}</p>
+          <p className="text-2xl font-bold text-thomas-slate">{dataModel.tables.reduce((acc, t) => acc + t.columns.length, 0)}</p>
         </div>
-        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-          <div className="flex items-center gap-2 text-slate-400 mb-1">
+        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+          <div className="flex items-center gap-2 text-slate-500 mb-1">
             <Link2 className="w-4 h-4" />
             <span className="text-xs">Relationships</span>
           </div>
-          <p className="text-2xl font-bold">{dataModel.relationships.length}</p>
+          <p className="text-2xl font-bold text-thomas-slate">{dataModel.relationships.length}</p>
         </div>
-        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-          <div className="flex items-center gap-2 text-slate-400 mb-1">
+        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+          <div className="flex items-center gap-2 text-slate-500 mb-1">
             <RefreshCw className="w-4 h-4" />
             <span className="text-xs">Update Modes</span>
           </div>
-          <p className="text-2xl font-bold">2</p>
-          <p className="text-[10px] text-slate-500">streaming, daily</p>
+          <p className="text-2xl font-bold text-thomas-slate">2</p>
+          <p className="text-[10px] text-slate-400">streaming, daily</p>
         </div>
       </div>
 
       {/* Entity Relationships */}
-      <div className="mb-6 bg-white/5 rounded-xl p-4 border border-white/10">
+      <div className="mb-6 bg-slate-50 rounded-xl p-4 border border-slate-200">
         <div className="flex items-center gap-2 mb-4">
-          <Link2 className="w-4 h-4 text-cyan-400" />
-          <h4 className="font-semibold text-sm">Entity Relationships</h4>
+          <Link2 className="w-4 h-4 text-cyan-600" />
+          <h4 className="font-semibold text-sm text-thomas-slate">Entity Relationships</h4>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-3">
           {dataModel.relationships.slice(0, 5).map((rel, i) => (
             <div key={i} className="flex items-center gap-2">
-              <span className="px-3 py-1.5 bg-cyan-500/20 text-cyan-300 rounded-lg text-xs font-mono">{rel.from.split('.')[0]}</span>
-              <span className="px-2 py-0.5 bg-white/10 text-slate-400 rounded text-[10px]">{rel.type}</span>
-              <span className="px-3 py-1.5 bg-pink-500/20 text-pink-300 rounded-lg text-xs font-mono">{rel.to.split('.')[0]}</span>
+              <span className="px-3 py-1.5 bg-cyan-100 text-cyan-700 rounded-lg text-xs font-mono">{rel.from.split('.')[0]}</span>
+              <span className="px-2 py-0.5 bg-slate-200 text-slate-600 rounded text-[10px]">{rel.type}</span>
+              <span className="px-3 py-1.5 bg-pink-100 text-pink-700 rounded-lg text-xs font-mono">{rel.to.split('.')[0]}</span>
             </div>
           ))}
         </div>
@@ -1185,32 +1224,32 @@ INSERT INTO thomas_assessments VALUES
       {/* Table Definitions */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-4">
-          <Table className="w-4 h-4 text-cyan-400" />
-          <h4 className="font-semibold text-sm">Table Definitions</h4>
+          <Table className="w-4 h-4 text-cyan-600" />
+          <h4 className="font-semibold text-sm text-thomas-slate">Table Definitions</h4>
         </div>
         <div className="space-y-2">
           {dataModel.tables.map((table) => (
-            <div key={table.name} className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+            <div key={table.name} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
               <button
                 onClick={() => setExpandedTable(expandedTable === table.name ? null : table.name)}
-                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
+                className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center">
-                    <Table className="w-4 h-4 text-cyan-400" />
+                  <div className="w-8 h-8 rounded-lg bg-cyan-100 flex items-center justify-center">
+                    <Table className="w-4 h-4 text-cyan-600" />
                   </div>
                   <div className="text-left">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm">{table.name}</span>
-                      <span className="text-[10px] text-slate-500">({table.columns.length} columns)</span>
+                      <span className="font-semibold text-sm text-thomas-slate">{table.name}</span>
+                      <span className="text-[10px] text-slate-400">({table.columns.length} columns)</span>
                     </div>
-                    <p className="text-xs text-slate-400">{table.description}</p>
+                    <p className="text-xs text-slate-500">{table.description}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={clsx(
                     'px-2 py-1 rounded text-[10px] font-medium',
-                    table.updateFrequency.includes('Real-time') ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+                    table.updateFrequency.includes('Real-time') ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
                   )}>
                     {table.updateFrequency}
                   </span>
@@ -1219,44 +1258,44 @@ INSERT INTO thomas_assessments VALUES
               </button>
               
               {expandedTable === table.name && (
-                <div className="border-t border-white/10 p-4">
+                <div className="border-t border-slate-200 p-4 bg-slate-50">
                   <div className="mb-3 flex items-center gap-2">
-                    <Sparkles className="w-3 h-3 text-purple-400" />
-                    <span className="text-xs text-slate-400">Business Context:</span>
-                    <span className="text-xs text-slate-300">{table.businessContext}</span>
+                    <Sparkles className="w-3 h-3 text-purple-500" />
+                    <span className="text-xs text-slate-500">Business Context:</span>
+                    <span className="text-xs text-slate-700">{table.businessContext}</span>
                   </div>
                   
-                  <div className="overflow-hidden rounded-lg border border-white/10">
+                  <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="bg-white/5">
-                          <th className="text-left py-2 px-3 text-slate-400 font-medium">Column</th>
-                          <th className="text-left py-2 px-3 text-slate-400 font-medium">Type</th>
-                          <th className="text-left py-2 px-3 text-slate-400 font-medium">Description</th>
-                          <th className="text-left py-2 px-3 text-slate-400 font-medium">Example</th>
+                        <tr className="bg-slate-100">
+                          <th className="text-left py-2 px-3 text-slate-500 font-medium">Column</th>
+                          <th className="text-left py-2 px-3 text-slate-500 font-medium">Type</th>
+                          <th className="text-left py-2 px-3 text-slate-500 font-medium">Description</th>
+                          <th className="text-left py-2 px-3 text-slate-500 font-medium">Example</th>
                         </tr>
                       </thead>
                       <tbody>
                         {table.columns.map((col, i) => (
-                          <tr key={i} className="border-t border-white/5">
+                          <tr key={i} className="border-t border-slate-100">
                             <td className="py-2 px-3">
                               <div className="flex items-center gap-1.5">
-                                {col.isPrimaryKey && <span title="Primary Key"><Key className="w-3 h-3 text-yellow-400" /></span>}
-                                {col.isForeignKey && <span title="Foreign Key"><Link2 className="w-3 h-3 text-cyan-400" /></span>}
-                                <span className={clsx('font-mono', col.isPrimaryKey ? 'text-yellow-300' : col.isForeignKey ? 'text-cyan-300' : 'text-white')}>
+                                {col.isPrimaryKey && <span title="Primary Key"><Key className="w-3 h-3 text-yellow-500" /></span>}
+                                {col.isForeignKey && <span title="Foreign Key"><Link2 className="w-3 h-3 text-cyan-500" /></span>}
+                                <span className={clsx('font-mono', col.isPrimaryKey ? 'text-yellow-700' : col.isForeignKey ? 'text-cyan-700' : 'text-thomas-slate')}>
                                   {col.name}
                                 </span>
                               </div>
                             </td>
                             <td className="py-2 px-3">
-                              <div className="flex items-center gap-1.5 text-slate-400">
+                              <div className="flex items-center gap-1.5 text-slate-500">
                                 {getTypeIcon(col.type)}
                                 <span className="font-mono text-[10px]">{col.type}</span>
                               </div>
                             </td>
-                            <td className="py-2 px-3 text-slate-300">{col.description}</td>
+                            <td className="py-2 px-3 text-slate-600">{col.description}</td>
                             <td className="py-2 px-3">
-                              <code className="text-[10px] text-slate-500 bg-white/5 px-1.5 py-0.5 rounded">{col.example}</code>
+                              <code className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{col.example}</code>
                             </td>
                           </tr>
                         ))}
@@ -1268,12 +1307,12 @@ INSERT INTO thomas_assessments VALUES
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] text-slate-500">Key Metrics:</span>
                       {table.metrics.map((metric, i) => (
-                        <span key={i} className="px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded text-[10px]">{metric}</span>
+                        <span key={i} className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-[10px]">{metric}</span>
                       ))}
                     </div>
                     <button 
                       onClick={() => copyToClipboard(`SELECT * FROM ${dataModel.catalog}.${dataModel.schema}.${table.name} LIMIT 100;`)}
-                      className="flex items-center gap-1.5 text-[10px] text-cyan-400 hover:text-cyan-300"
+                      className="flex items-center gap-1.5 text-[10px] text-cyan-600 hover:text-cyan-700"
                     >
                       <Copy className="w-3 h-3" />
                       Copy SELECT
@@ -1287,20 +1326,20 @@ INSERT INTO thomas_assessments VALUES
       </div>
 
       {/* SQL Preview */}
-      <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+      <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="font-semibold text-sm">Schema Preview</h4>
+          <h4 className="font-semibold text-sm text-thomas-slate">Schema Preview</h4>
           <button 
             onClick={() => copyToClipboard(generateSQL())}
-            className="flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300"
+            className="flex items-center gap-1.5 text-xs text-cyan-600 hover:text-cyan-700"
           >
-            {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+            {copied ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
             Copy All SQL
           </button>
         </div>
-        <pre className="bg-[#0a0a0f] rounded-lg p-4 text-[10px] text-green-400 overflow-x-auto max-h-64 overflow-y-auto font-mono">
-          {generateSQL().slice(0, 2000)}
-          {generateSQL().length > 2000 && '\n\n-- ... (click "Export Schema" to download complete definition)'}
+        <pre className="bg-slate-900 rounded-lg p-4 text-[10px] text-green-400 overflow-x-auto max-h-64 overflow-y-auto font-mono">
+          {generateSQL().slice(0, 2500)}
+          {generateSQL().length > 2500 && '\n\n-- ... (click "Export" to download complete SQL with data)'}
         </pre>
       </div>
     </div>
