@@ -14,10 +14,40 @@ import {
   ArrowRight,
   Box,
   Code,
-  Sparkles
+  Sparkles,
+  TrendingUp,
+  TrendingDown,
+  Users,
+  Target,
+  Clock,
+  Award,
+  AlertTriangle,
+  Heart,
+  Briefcase,
+  BarChart2
 } from 'lucide-react'
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Line, PieChart, Pie, Cell } from 'recharts'
 import { usePageContext } from '../contexts/PageContext'
 import clsx from 'clsx'
+
+// HR Dashboard Mock Data
+const retentionData = [
+  { quarter: 'Q1 24', retention: 85, interventions: 12 },
+  { quarter: 'Q2 24', retention: 87, interventions: 18 },
+  { quarter: 'Q3 24', retention: 89, interventions: 24 },
+  { quarter: 'Q4 24', retention: 90, interventions: 31 },
+  { quarter: 'Q1 25', retention: 91, interventions: 38 },
+  { quarter: 'Q2 25', retention: 92, interventions: 42 },
+  { quarter: 'Q3 25', retention: 93, interventions: 48 },
+  { quarter: 'Q4 25', retention: 94, interventions: 52 },
+]
+
+const assessmentCoverage = [
+  { name: 'PPA', value: 92, color: '#f97316' },
+  { name: 'GIA', value: 78, color: '#8b5cf6' },
+  { name: 'HPTI', value: 65, color: '#06b6d4' },
+  { name: 'TEIQue', value: 45, color: '#22c55e' },
+]
 
 interface SystemStatus {
   is_databricks_app: boolean
@@ -85,126 +115,131 @@ export default function UnderTheHood() {
           </div>
         </div>
 
-        {/* Architecture Overview - 4 columns */}
-        <div className="grid grid-cols-4 gap-5 mb-8">
-          {/* Databricks Apps */}
-          <div className="bg-white rounded-2xl shadow-card p-5 border border-slate-200">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
-                <Cloud className="w-5 h-5 text-white" />
+        {/* Architecture Overview - 2 groups with bounding boxes */}
+        <div className="grid grid-cols-2 gap-6 mb-8">
+          {/* DEMO ACTIVE - Databricks Apps + Mosaic AI */}
+          <div className="relative rounded-2xl border-2 border-success p-4 bg-success/5">
+            <div className="absolute -top-3 left-4 px-3 py-0.5 bg-success text-white text-xs font-bold rounded-full flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+              DEMO ACTIVE
+            </div>
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              {/* Databricks Apps */}
+              <div className="bg-white rounded-xl shadow-sm p-4 border border-slate-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
+                    <Cloud className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-semibold text-thomas-slate text-sm">Databricks Apps</h3>
+                    <p className="text-[10px] text-slate-500">Application Hosting</p>
+                  </div>
+                </div>
+                <ul className="space-y-1 text-sm text-slate-600">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-3 h-3 text-success" />
+                    <span className="text-[11px]">FastAPI Backend</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-3 h-3 text-success" />
+                    <span className="text-[11px]">React Frontend (Vite)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-3 h-3 text-success" />
+                    <span className="text-[11px]">Service Principal Auth</span>
+                  </li>
+                </ul>
               </div>
-              <div>
-                <h3 className="font-display font-semibold text-thomas-slate text-sm">Databricks Apps</h3>
-                <p className="text-xs text-slate-500">Application Hosting</p>
+
+              {/* Mosaic AI Model Serving */}
+              <div className="bg-white rounded-xl shadow-sm p-4 border border-slate-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-semibold text-thomas-slate text-sm">Mosaic AI</h3>
+                    <p className="text-[10px] text-slate-500">Model Serving</p>
+                  </div>
+                </div>
+                <ul className="space-y-1 text-sm text-slate-600">
+                  <li className="flex items-center gap-2">
+                    <Zap className="w-3 h-3 text-warning" />
+                    <span className="font-mono text-[10px]">gemini-2-5-flash</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-3 h-3 text-success" />
+                    <span className="text-[11px]">AskThom Chat</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-3 h-3 text-success" />
+                    <span className="text-[11px]">Candidate Summaries</span>
+                  </li>
+                </ul>
               </div>
             </div>
-            <ul className="space-y-1.5 text-sm text-slate-600">
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs">FastAPI Backend</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs">React Frontend (Vite)</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs">Service Principal Auth</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs">Auto-scaling Compute</span>
-              </li>
-            </ul>
           </div>
 
-          {/* Model Serving */}
-          <div className="bg-white rounded-2xl shadow-card p-5 border border-slate-200">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h3 className="font-display font-semibold text-thomas-slate text-sm">Mosaic AI</h3>
-                <p className="text-xs text-slate-500">Model Serving</p>
-              </div>
+          {/* PRODUCTION - SQL Warehouse + Lakebase */}
+          <div className="relative rounded-2xl border-2 border-slate-300 border-dashed p-4 bg-slate-50 opacity-60">
+            <div className="absolute -top-3 left-4 px-3 py-0.5 bg-slate-500 text-white text-xs font-bold rounded-full">
+              PRODUCTION
             </div>
-            <ul className="space-y-1.5 text-sm text-slate-600">
-              <li className="flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5 text-warning" />
-                <span className="font-mono text-[10px]">gemini-2-5-flash</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs">AskThom Chat</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs">CV Extraction</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs">Candidate Summaries</span>
-              </li>
-            </ul>
-          </div>
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              {/* SQL Warehouse - for AI Functions */}
+              <div className="bg-white rounded-xl shadow-sm p-4 border border-slate-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
+                    <Server className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-semibold text-thomas-slate text-sm">SQL Warehouse</h3>
+                    <p className="text-[10px] text-slate-500">AI Functions</p>
+                  </div>
+                </div>
+                <ul className="space-y-1 text-sm text-slate-600">
+                  <li className="flex items-center gap-2">
+                    <Database className="w-3 h-3 text-cyan-500" />
+                    <span className="font-mono text-[10px]">thomas-talenthub-dwh</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-3 h-3 text-slate-400" />
+                    <span className="text-[11px]">AI_QUERY (CV Extraction)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-3 h-3 text-slate-400" />
+                    <span className="text-[11px]">AI_GENERATE</span>
+                  </li>
+                </ul>
+              </div>
 
-          {/* SQL Warehouse - for AI Functions */}
-          <div className="bg-white rounded-2xl shadow-card p-5 border border-slate-200">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
-                <Server className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h3 className="font-display font-semibold text-thomas-slate text-sm">SQL Warehouse</h3>
-                <p className="text-xs text-slate-500">AI Functions</p>
-              </div>
-            </div>
-            <ul className="space-y-1.5 text-sm text-slate-600">
-              <li className="flex items-center gap-2">
-                <Database className="w-3.5 h-3.5 text-cyan-500" />
-                <span className="font-mono text-[10px]">thomas-talenthub-dwh</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs">AI_QUERY Function</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs">AI_GENERATE</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs">Serverless Compute</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Lakebase - Delta Lake Storage */}
-          <div className="bg-white rounded-2xl shadow-card p-5 border border-slate-200">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
-                <Layers className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h3 className="font-display font-semibold text-thomas-slate text-sm">Lakebase</h3>
-                <p className="text-xs text-slate-500">Data Storage</p>
+              {/* Lakebase - Delta Lake Storage */}
+              <div className="bg-white rounded-xl shadow-sm p-4 border border-slate-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+                    <Layers className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-semibold text-thomas-slate text-sm">Lakebase</h3>
+                    <p className="text-[10px] text-slate-500">Data Storage</p>
+                  </div>
+                </div>
+                <ul className="space-y-1 text-sm text-slate-600">
+                  <li className="flex items-center gap-2">
+                    <Layers className="w-3 h-3 text-indigo-500" />
+                    <span className="text-[11px]">Delta Lake Tables</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-3 h-3 text-slate-400" />
+                    <span className="text-[11px]">Unity Catalog</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Shield className="w-3 h-3 text-slate-400" />
+                    <span className="text-[11px]">Column Masking</span>
+                  </li>
+                </ul>
               </div>
             </div>
-            <ul className="space-y-1.5 text-sm text-slate-600">
-              <li className="flex items-center gap-2">
-                <Layers className="w-3.5 h-3.5 text-indigo-500" />
-                <span className="text-xs">Delta Lake Tables</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs">Unity Catalog</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Shield className="w-3.5 h-3.5 text-slate-400" />
-                <span className="text-xs">Column Masking</span>
-              </li>
-            </ul>
           </div>
         </div>
 
@@ -318,25 +353,28 @@ export default function UnderTheHood() {
 
             {/* Split into branches */}
             <div className="flex flex-col gap-4">
-              {/* Model Serving Branch */}
-              <div className="flex items-center gap-3 bg-purple-50 rounded-xl px-4 py-2 border border-purple-200">
+              {/* Model Serving Branch - ACTIVE */}
+              <div className="flex items-center gap-3 bg-purple-50 rounded-xl px-4 py-2 border-2 border-success relative">
+                <div className="absolute -top-2 -right-2 w-4 h-4 bg-success rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-3 h-3 text-white" />
+                </div>
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <span className="text-xs font-medium text-purple-700">Model Serving</span>
-                  <p className="text-[10px] text-purple-500">AskThom • CV Extraction</p>
+                  <p className="text-[10px] text-purple-500">AskThom Chat</p>
                 </div>
               </div>
               
-              {/* SQL Warehouse Branch */}
-              <div className="flex items-center gap-3 bg-cyan-50 rounded-xl px-4 py-2 border border-cyan-200">
+              {/* SQL Warehouse Branch - PRODUCTION */}
+              <div className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-2 border border-slate-300 border-dashed opacity-60">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
                   <Database className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <span className="text-xs font-medium text-cyan-700">SQL Warehouse</span>
-                  <p className="text-[10px] text-cyan-500">AI_QUERY • Analytics</p>
+                  <span className="text-xs font-medium text-slate-600">SQL Warehouse</span>
+                  <p className="text-[10px] text-slate-500">CV Extraction • AI_QUERY</p>
                 </div>
               </div>
             </div>
@@ -466,6 +504,200 @@ response = w.serving_endpoints.query(
                 <li>Contextual RAG</li>
                 <li>Prompt Engineering</li>
               </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* HR Executive Dashboard - Workforce Impact */}
+        <div className="mt-8 bg-white rounded-2xl shadow-card p-8 border border-slate-200">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-thomas-orange to-thomas-pink flex items-center justify-center">
+              <BarChart2 className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className="font-display font-bold text-xl text-thomas-slate">HR Executive Dashboard</h3>
+              <p className="text-slate-500">Thomas + GenAI Impact on IFS Workforce</p>
+            </div>
+          </div>
+
+          {/* Primary KPIs - 4 cards */}
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            <KPICard 
+              icon={<Users className="w-5 h-5" />}
+              iconBg="from-blue-500 to-cyan-500"
+              label="Active Employees"
+              value="2,847"
+              change="+12%"
+              positive={true}
+              subtext="vs. last quarter"
+            />
+            <KPICard 
+              icon={<TrendingDown className="w-5 h-5" />}
+              iconBg="from-green-500 to-emerald-500"
+              label="Churn Rate"
+              value="8.2%"
+              change="-34%"
+              positive={true}
+              subtext="reduced via early intervention"
+            />
+            <KPICard 
+              icon={<Target className="w-5 h-5" />}
+              iconBg="from-purple-500 to-pink-500"
+              label="Hiring Accuracy"
+              value="94%"
+              change="+28%"
+              positive={true}
+              subtext="Thomas-screened candidates"
+            />
+            <KPICard 
+              icon={<Clock className="w-5 h-5" />}
+              iconBg="from-orange-500 to-red-500"
+              label="Time to Hire"
+              value="18 days"
+              change="-42%"
+              positive={true}
+              subtext="AI-accelerated screening"
+            />
+          </div>
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-3 gap-6 mb-6">
+            {/* Retention Improvement Over Time */}
+            <div className="col-span-2 bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <h4 className="font-semibold text-thomas-slate text-sm mb-4">Retention Rate Improvement (2024-2026)</h4>
+              <ResponsiveContainer width="100%" height={200}>
+                <ComposedChart data={retentionData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="quarter" tick={{ fontSize: 10 }} stroke="#94a3b8" />
+                  <YAxis yAxisId="left" tick={{ fontSize: 10 }} stroke="#94a3b8" domain={[80, 100]} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} stroke="#94a3b8" />
+                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
+                  <Bar yAxisId="left" dataKey="retention" fill="#22c55e" radius={[4, 4, 0, 0]} name="Retention %" />
+                  <Line yAxisId="right" type="monotone" dataKey="interventions" stroke="#f97316" strokeWidth={2} dot={{ fill: '#f97316', r: 3 }} name="AI Interventions" />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Thomas Assessment Adoption */}
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <h4 className="font-semibold text-thomas-slate text-sm mb-4">Thomas Assessment Coverage</h4>
+              <div className="flex justify-center">
+                <ResponsiveContainer width={160} height={160}>
+                  <PieChart>
+                    <Pie
+                      data={assessmentCoverage}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={70}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {assessmentCoverage.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {assessmentCoverage.map((item, i) => (
+                  <div key={i} className="flex items-center gap-1.5 text-[10px]">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="text-slate-600">{item.name}</span>
+                    <span className="text-slate-400 ml-auto">{item.value}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Secondary KPIs */}
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            <SecondaryKPI 
+              icon={<Award className="w-4 h-4 text-yellow-500" />}
+              label="Promotions Predicted"
+              value="156"
+              description="Leadership-ready identified"
+            />
+            <SecondaryKPI 
+              icon={<AlertTriangle className="w-4 h-4 text-orange-500" />}
+              label="Churn Risks Flagged"
+              value="43"
+              description="Early intervention enabled"
+            />
+            <SecondaryKPI 
+              icon={<Heart className="w-4 h-4 text-pink-500" />}
+              label="Team Chemistry Score"
+              value="87%"
+              description="Cross-department average"
+            />
+            <SecondaryKPI 
+              icon={<Briefcase className="w-4 h-4 text-blue-500" />}
+              label="Roles Filled"
+              value="89"
+              description="YTD with Thomas screening"
+            />
+          </div>
+
+          {/* GenAI Impact Breakdown */}
+          <div className="bg-gradient-to-r from-thomas-slate/5 to-thomas-pink/5 rounded-xl p-5 border border-thomas-orange/20">
+            <h4 className="font-semibold text-thomas-slate text-sm mb-4 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-thomas-orange" />
+              GenAI-Powered Insights Impact
+            </h4>
+            <div className="grid grid-cols-5 gap-4">
+              <ImpactCard 
+                label="AskThom Queries"
+                value="12,450"
+                detail="Manager questions answered"
+              />
+              <ImpactCard 
+                label="CVs Analyzed"
+                value="3,200"
+                detail="Automated screening"
+              />
+              <ImpactCard 
+                label="Bias Alerts"
+                value="89"
+                detail="Prevented biased decisions"
+              />
+              <ImpactCard 
+                label="Retention Saves"
+                value="£2.4M"
+                detail="Avoided replacement costs"
+              />
+              <ImpactCard 
+                label="Hours Saved"
+                value="4,800"
+                detail="HR admin automation"
+              />
+            </div>
+          </div>
+
+          {/* ROI Summary */}
+          <div className="mt-6 bg-gradient-to-r from-thomas-orange to-thomas-pink rounded-xl p-5">
+            <div className="grid grid-cols-4 gap-6 text-white">
+              <div>
+                <p className="text-white/70 text-xs mb-1">Platform Investment</p>
+                <p className="text-2xl font-bold">£180K</p>
+                <p className="text-[10px] text-white/60">Annual license + implementation</p>
+              </div>
+              <div>
+                <p className="text-white/70 text-xs mb-1">Annual Savings</p>
+                <p className="text-2xl font-bold">£2.8M</p>
+                <p className="text-[10px] text-white/60">Churn reduction + efficiency</p>
+              </div>
+              <div>
+                <p className="text-white/70 text-xs mb-1">Payback Period</p>
+                <p className="text-2xl font-bold">23 days</p>
+                <p className="text-[10px] text-white/60">Time to positive ROI</p>
+              </div>
+              <div>
+                <p className="text-white/70 text-xs mb-1">Annual ROI</p>
+                <p className="text-2xl font-bold">1,456%</p>
+                <p className="text-[10px] text-white/60">Return on investment</p>
+              </div>
             </div>
           </div>
         </div>
@@ -767,6 +999,90 @@ function InfraCard({
         <span className="text-xs font-medium">{label}</span>
       </div>
       <p className="text-[10px] text-slate-400">{detail}</p>
+    </div>
+  )
+}
+
+// KPI Card for HR Dashboard
+function KPICard({
+  icon,
+  iconBg,
+  label,
+  value,
+  change,
+  positive,
+  subtext
+}: {
+  icon: React.ReactNode
+  iconBg: string
+  label: string
+  value: string
+  change: string
+  positive: boolean
+  subtext: string
+}) {
+  return (
+    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${iconBg} flex items-center justify-center text-white`}>
+          {icon}
+        </div>
+        <span className="text-xs font-medium text-slate-500">{label}</span>
+      </div>
+      <div className="flex items-end gap-2 mb-1">
+        <span className="text-2xl font-bold text-thomas-slate">{value}</span>
+        <span className={clsx(
+          "text-sm font-semibold flex items-center gap-0.5 mb-1",
+          positive ? "text-success" : "text-danger"
+        )}>
+          {positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+          {change}
+        </span>
+      </div>
+      <p className="text-[10px] text-slate-400">{subtext}</p>
+    </div>
+  )
+}
+
+// Secondary KPI for HR Dashboard
+function SecondaryKPI({
+  icon,
+  label,
+  value,
+  description
+}: {
+  icon: React.ReactNode
+  label: string
+  value: string
+  description: string
+}) {
+  return (
+    <div className="bg-white rounded-lg p-3 border border-slate-200">
+      <div className="flex items-center gap-2 mb-2">
+        {icon}
+        <span className="text-xs font-medium text-slate-600">{label}</span>
+      </div>
+      <p className="text-xl font-bold text-thomas-slate">{value}</p>
+      <p className="text-[10px] text-slate-400">{description}</p>
+    </div>
+  )
+}
+
+// Impact Card for GenAI section
+function ImpactCard({
+  label,
+  value,
+  detail
+}: {
+  label: string
+  value: string
+  detail: string
+}) {
+  return (
+    <div className="bg-white rounded-lg p-3 border border-slate-200">
+      <p className="text-[10px] text-slate-500 mb-1">{label}</p>
+      <p className="text-lg font-bold text-thomas-slate">{value}</p>
+      <p className="text-[9px] text-slate-400">{detail}</p>
     </div>
   )
 }

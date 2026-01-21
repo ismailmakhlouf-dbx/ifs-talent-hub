@@ -63,11 +63,25 @@ export default function Referrals() {
         hasAIInsights: !!aiInsights
       } : null,
       aiInsights: aiInsights ? {
-        summary: aiInsights.ai_summary,
-        predictedPPA: aiInsights.predicted_assessments?.ppa,
+        // Full AI summary with strengths, concerns, recommendation
+        fullSummary: aiInsights.ai_summary,
+        // CV extracted data
         yearsExperience: aiInsights.cv_insights?.years_experience,
-        skills: aiInsights.cv_insights?.skills?.slice(0, 10),
-        previousCompanies: aiInsights.cv_insights?.previous_companies
+        skills: aiInsights.cv_insights?.skills,
+        previousCompanies: aiInsights.cv_insights?.previous_companies,
+        education: aiInsights.cv_insights?.education,
+        certifications: aiInsights.cv_insights?.certifications,
+        cvSummary: aiInsights.cv_insights?.summary,
+        // Predicted Thomas assessments
+        predictedPPA: aiInsights.predicted_assessments?.ppa,
+        predictedHPTI: aiInsights.predicted_assessments?.hpti_predicted,
+        estimatedGIA: aiInsights.predicted_assessments?.gia_estimated,
+        // LinkedIn data
+        linkedinHeadline: aiInsights.linkedin_insights?.headline,
+        linkedinConnections: aiInsights.linkedin_insights?.connections,
+        linkedinRecommendations: aiInsights.linkedin_insights?.featured_recommendations,
+        // Work history
+        workHistory: aiInsights.work_history?.slice(0, 2),
       } : null
     })
   }, [referrals, selectedReferral, aiInsights, setPageContext])
@@ -83,16 +97,28 @@ export default function Referrals() {
     setSelectedReferral(referral)
     setAiInsights(null)
     
-    // Load existing insights if available
-    if (referral.ai_enriched) {
-      try {
+    // Always load/extract insights for better AskThom context
+    try {
+      if (referral.ai_enriched) {
+        // Load existing insights
         const details = await recruitmentApi.getReferralDetails(referral.referral_id)
         if (details.ai_insights) {
           setAiInsights(details.ai_insights)
         }
-      } catch (e) {
-        console.error(e)
+      } else {
+        // Auto-extract insights for new referrals (runs in background)
+        setExtracting(true)
+        const response = await recruitmentApi.extractReferralInsights(referral.referral_id)
+        setAiInsights(response.insights)
+        setSelectedReferral(response.referral)
+        setReferrals(prev => prev.map(r => 
+          r.referral_id === response.referral.referral_id ? response.referral : r
+        ))
+        setExtracting(false)
       }
+    } catch (e) {
+      console.error('Failed to load insights:', e)
+      setExtracting(false)
     }
   }
 

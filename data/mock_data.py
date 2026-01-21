@@ -743,9 +743,22 @@ class MockDataGenerator:
                     code_reviews = None
                     pr_merged = None
                 
-                # Morale and sentiment
-                morale_score = random.randint(50, 95)
-                slack_sentiment = random.uniform(0.3, 0.9)
+                # Morale and sentiment - create some specific "problem" employees
+                emp_num = int(emp["employee_id"].replace("EMP-", ""))
+                
+                # Designated problem employees for interesting demo cases
+                if emp_num in [1001, 1005, 1010]:  # High churn risk employees
+                    morale_score = random.randint(35, 55)
+                    slack_sentiment = random.uniform(0.25, 0.45)
+                elif emp_num in [1002, 1006]:  # Medium risk, struggling
+                    morale_score = random.randint(50, 65)
+                    slack_sentiment = random.uniform(0.4, 0.55)
+                elif emp_num in [1003, 1007]:  # High performers, happy
+                    morale_score = random.randint(85, 98)
+                    slack_sentiment = random.uniform(0.8, 0.95)
+                else:
+                    morale_score = random.randint(50, 95)
+                    slack_sentiment = random.uniform(0.3, 0.9)
                 
                 # Churn risk calculation
                 churn_indicators = 0
@@ -936,27 +949,27 @@ class MockDataGenerator:
             compliance_balance * 0.20
         )
         
-        # Determine interaction style recommendations
+        # Determine interaction style recommendations - specific and actionable
         if d1 > 70 and d2 > 70:
-            interaction_note = "Both high-D: potential for power struggles. Clear role boundaries recommended."
-            risk = "high"
+            interaction_note = "High-D pairing benefits from pre-agreed decision domains. Schedule brief daily syncs to prevent parallel work."
+            risk = "medium"
         elif d1 < 30 and d2 < 30:
-            interaction_note = "Both low-D: may lack decisiveness together. One should take lead role."
+            interaction_note = "Consider rotating facilitator roles in meetings. Both may defer; assign explicit ownership per project."
             risk = "medium"
         elif abs(i1 - i2) > 40:
-            interaction_note = "Communication style mismatch: one prefers detail, other prefers big picture."
+            interaction_note = "Align on communication preferences early: one may want bullet points, the other context. Use shared templates."
             risk = "medium"
         elif s1 > 70 and s2 < 30:
-            interaction_note = "Pace mismatch: one values stability, other thrives on change."
+            interaction_note = "Build in buffer time for the high-S partner when introducing changes. Frame urgency with rationale."
             risk = "medium"
         elif chemistry_score >= 75:
-            interaction_note = "Strong natural compatibility. Collaboration should be smooth."
+            interaction_note = "Natural working rhythm aligns well. Leverage this for high-stakes projects requiring close collaboration."
             risk = "low"
         elif chemistry_score >= 55:
-            interaction_note = "Moderate compatibility. Some adjustment may be needed."
+            interaction_note = "Complementary profiles. Establish explicit feedback loops to catch misunderstandings early."
             risk = "low"
         else:
-            interaction_note = "Low natural chemistry. Structured interactions recommended."
+            interaction_note = "Assign a neutral facilitator for key discussions. Document agreements in writing."
             risk = "high"
         
         return {

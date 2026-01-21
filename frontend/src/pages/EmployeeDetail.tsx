@@ -83,8 +83,8 @@ export default function EmployeeDetail() {
             competitiveness: assessment.hpti_competitiveness
           }
         } : null,
-        // Leadership & team data
-        leadershipReadiness: leadershipPotential?.prediction?.readiness_score || null,
+        // Leadership & team data - use the same value shown in the UI header
+        leadershipReadiness: data.performance_history.find(p => p.quarter === '2024-Q4')?.leadership_readiness || null,
         recommendedNextRole: leadershipPotential?.prediction?.recommended_role || null,
         teamCollaboration: teamCollaboration ? {
           avgChemistryScore: teamCollaboration.summary?.avg_chemistry_score,

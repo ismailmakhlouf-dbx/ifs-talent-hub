@@ -153,12 +153,16 @@ const THOMAS_KEYWORDS = [
   'Risk Approach', 'Ambiguity Acceptance', 'Competitiveness'
 ]
 
+// IFS keywords - short acronyms need word boundary matching
 const IFS_KEYWORDS = [
-  'IFS', 'IFS Cloud', 'Industrial AI',
-  'ERP', 'Enterprise Resource Planning',
-  'EAM', 'Enterprise Asset Management',
-  'FSM', 'Field Service Management'
+  'IFS Cloud', 'Industrial AI',
+  'Enterprise Resource Planning',
+  'Enterprise Asset Management',
+  'Field Service Management'
 ]
+
+// Short IFS acronyms that need word boundary matching (won't match inside words like "Team")
+const IFS_ACRONYMS = ['IFS', 'ERP', 'EAM', 'FSM']
 
 // Parse markdown and render with highlighted keywords
 function HighlightedText({ text, thomasKeywords = [], ifsKeywords = [] }: { 
@@ -219,25 +223,32 @@ function HighlightedText({ text, thomasKeywords = [], ifsKeywords = [] }: {
   
   // Combine provided keywords with defaults
   const allThomasKw = [...new Set([...THOMAS_KEYWORDS, ...thomasKeywords])]
-  const allIfsKw = [...new Set([...IFS_KEYWORDS, ...ifsKeywords])]
+  // Filter out short acronyms from IFS keywords - they'll be handled separately with word boundaries
+  const allIfsKw = [...new Set([...IFS_KEYWORDS, ...ifsKeywords])].filter(
+    k => !IFS_ACRONYMS.includes(k.toUpperCase())
+  )
   
   // Parse markdown first
   const parsedContent = parseMarkdown(text)
   
-  // Now highlight keywords in string parts
+  // Now highlight keywords in string parts - with word boundary awareness
   const highlightKeywords = (content: React.ReactNode): React.ReactNode => {
     if (typeof content !== 'string') return content
     
-    const pattern = new RegExp(
+    // For regular (longer) keywords, use case-insensitive match
+    // Short acronyms (EAM, ERP, FSM, IFS) are excluded and handled separately with word boundaries
+    const regularPattern = new RegExp(
       `(${[...allThomasKw, ...allIfsKw].map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`,
       'gi'
     )
     
-    const parts = content.split(pattern)
+    // Split by regular keywords first
+    const parts = content.split(regularPattern)
     
     return parts.map((part, i) => {
       const lowerPart = part.toLowerCase()
       
+      // Check Thomas keywords
       if (allThomasKw.some(k => k.toLowerCase() === lowerPart)) {
         return (
           <span key={i} className="text-thomas-orange font-semibold" title="Thomas International">
@@ -246,6 +257,7 @@ function HighlightedText({ text, thomasKeywords = [], ifsKeywords = [] }: {
         )
       }
       
+      // Check IFS keywords (full phrases)
       if (allIfsKw.some(k => k.toLowerCase() === lowerPart)) {
         return (
           <span key={i} className="text-ifs-purple font-semibold" title="IFS Cloud">
@@ -254,7 +266,34 @@ function HighlightedText({ text, thomasKeywords = [], ifsKeywords = [] }: {
         )
       }
       
-      return <span key={i}>{part}</span>
+      // For short acronyms (EAM, ERP, FSM, IFS), only match if they're whole words
+      // This prevents "Team" from matching "EAM"
+      let processedPart: React.ReactNode = part
+      for (const acronym of IFS_ACRONYMS) {
+        if (typeof processedPart === 'string') {
+          // Use word boundary regex to only match whole words
+          const acronymPattern = new RegExp(`\\b(${acronym})\\b`, 'gi')
+          if (acronymPattern.test(processedPart)) {
+            const subParts: string[] = processedPart.split(new RegExp(`\\b(${acronym})\\b`, 'gi'))
+            processedPart = subParts.map((subPart: string, j: number) => {
+              if (subPart.toUpperCase() === acronym) {
+                return (
+                  <span key={`${i}-${j}`} className="text-ifs-purple font-semibold" title="IFS Cloud">
+                    {subPart}
+                  </span>
+                )
+              }
+              return subPart
+            })
+          }
+        }
+      }
+      
+      if (Array.isArray(processedPart)) {
+        return <React.Fragment key={i}>{processedPart}</React.Fragment>
+      }
+      
+      return <span key={i}>{processedPart}</span>
     })
   }
   

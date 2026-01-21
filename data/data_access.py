@@ -13,12 +13,26 @@ class DataAccessLayer:
     """
     Unified data access layer that abstracts data source.
     Uses mock data in local mode and Databricks SQL in production.
+    NOTE: For demo purposes, always uses mock data since real SQL tables aren't set up.
     """
     
     def __init__(self):
-        self.is_local = is_local_mode()
+        # For this demo, always use mock data since SQL tables aren't deployed
+        # To use real SQL, set USE_REAL_SQL=true
+        import os
+        use_mock = os.getenv("USE_REAL_SQL", "false").lower() != "true"
+        
+        self.is_local = use_mock  # Use mock data unless explicitly using real SQL
         self.mock_gen = get_mock_data_generator() if self.is_local else None
-        self.connection = None if self.is_local else get_sql_connection()
+        self.connection = None
+        if not self.is_local:
+            try:
+                self.connection = get_sql_connection()
+            except Exception as e:
+                import logging
+                logging.warning(f"Failed to get SQL connection, falling back to mock data: {e}")
+                self.is_local = True
+                self.mock_gen = get_mock_data_generator()
         self.config = DatabricksConfig.from_env()
     
     def _execute_query(self, query: str) -> pd.DataFrame:

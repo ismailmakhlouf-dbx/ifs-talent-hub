@@ -51,12 +51,18 @@ class DatabricksConfig:
 
 def get_app_mode() -> str:
     """Get current app mode (local or databricks)"""
+    # Check RUN_MODE first (matches oe-smart-tariff), then APP_MODE for backwards compatibility
+    run_mode = os.getenv("RUN_MODE", "")
+    if run_mode:
+        return run_mode
     return os.getenv("APP_MODE", "local")
 
 
 def is_local_mode() -> bool:
     """Check if running in local mode with mock data"""
-    return get_app_mode() == "local"
+    mode = get_app_mode()
+    # "databricks" mode means we're in the cloud
+    return mode == "local"
 
 
 def get_sql_connection():

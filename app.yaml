@@ -9,22 +9,15 @@ command: ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # Environment variables
 env:
-  - name: DATABRICKS_HOST
-    value: "fevm-ismailmakhlouf-demo-ws.cloud.databricks.com"
-  - name: DATABRICKS_WAREHOUSE_ID
-    value: "54da90976fc8c514"
   - name: DATABRICKS_MODEL_ENDPOINT
     value: "databricks-gemini-2-5-flash"
-  - name: APP_MODE
-    value: "local"
-  - name: USE_MOCK_DATA
-    value: "true"
-  - name: PYTHONPATH
-    value: "."
   - name: LOG_LEVEL
-    value: "INFO"
+    value: "DEBUG"
 
-# Resources
+# CRITICAL: Define resources the app needs access to
+# This whitelists the serving endpoint for the app's managed identity
 resources:
-  cpu: "2"
-  memory: "4Gi"
+  - name: "ask_thom_llm"
+    serving_endpoint:
+      name: "databricks-gemini-2-5-flash"
+      permission: "CAN_QUERY"

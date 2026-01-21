@@ -814,6 +814,7 @@ class AskThomResponse(BaseModel):
     thomas_keywords_found: List[str]
     ifs_keywords_found: List[str]
     sources: List[str]
+    debug_info: Optional[dict] = None  # Optional diagnostics
 
 
 def get_thomas_trait_kw():
@@ -866,54 +867,115 @@ def highlight_keywords(text: str) -> dict:
 
 
 def build_context_prompt(context: Optional[Dict[str, Any]], page_context: Optional[str]) -> str:
-    """
-    Build a context string from the page context object.
-    Handles any JSON structure flexibly and emphasizes the current subject.
-    """
+    """Build context for the LLM from the current page state."""
     if not context and not page_context:
         return ""
     
     parts = []
     
+    # Who is being viewed
+    currently_viewing = (
+        context.get("currentlyViewingEmployee") or 
+        context.get("currentlyViewingReferral") or 
+        context.get("currentlyViewingCandidate") if context else None
+    )
+    
+    if currently_viewing:
+        parts.append(f"Currently viewing: {currently_viewing}")
+    
     if page_context:
-        parts.append(f"**Current Page**: {page_context}")
+        parts.append(f"Page: {page_context}")
     
     if context:
-        # Check for explicit "currently viewing" indicators first
-        if context.get("currentlyViewingEmployee"):
-            parts.append(f"\n**IMPORTANT: The user is currently viewing the profile of employee: {context['currentlyViewingEmployee']}**")
-            parts.append("When the user refers to 'them', 'this person', 'her/him', uses a first name, or asks 'tell me about' without specifying, they mean this employee.\n")
-        elif context.get("currentlyViewingReferral"):
-            parts.append(f"\n**IMPORTANT: The user is currently viewing referral candidate: {context['currentlyViewingReferral']}**")
-            parts.append("When the user refers to 'them', 'this person', 'this referral', uses a first name, or asks 'tell me about' without specifying, they mean this referral.\n")
-        elif context.get("currentlyViewingCandidate"):
-            parts.append(f"\n**IMPORTANT: The user is currently viewing candidate: {context['currentlyViewingCandidate']}**")
-            parts.append("When the user refers to 'them', 'this person', 'this candidate', uses a first name, or asks 'tell me about' without specifying, they mean this candidate.\n")
+        # Selected person details (for Referrals/Candidates pages)
+        selected = context.get("selectedReferral") or context.get("selectedCandidate") or context.get("selectedEmployee")
+        if selected and isinstance(selected, dict):
+            parts.append("")
+            for key, value in selected.items():
+                if value is not None and value != "" and key not in ["hasAIInsights"]:
+                    if isinstance(value, list):
+                        parts.append(f"{key}: {', '.join(str(v) for v in value[:8])}")
+                    elif not isinstance(value, dict):
+                        parts.append(f"{key}: {value}")
         
-        # Format the context dict into readable text
-        parts.append("**Page Data**:")
-        for key, value in context.items():
-            if value is None:
-                continue
-            # Skip the "currently viewing" keys as we've handled them above
-            if key in ("currentlyViewingEmployee", "currentlyViewingCandidate"):
-                continue
-            # Format key nicely
-            formatted_key = key.replace("_", " ").replace("Id", "ID").title()
-            # Handle different value types
-            if isinstance(value, dict):
-                parts.append(f"  {formatted_key}:")
-                for k, v in value.items():
-                    if v is not None:
-                        k_formatted = k.replace("_", " ").title()
-                        parts.append(f"    - {k_formatted}: {v}")
-            elif isinstance(value, list):
-                if len(value) > 0:
-                    parts.append(f"  {formatted_key}: {', '.join(str(v) for v in value[:5])}")
-                    if len(value) > 5:
-                        parts.append(f"    (and {len(value) - 5} more...)")
-            else:
-                parts.append(f"  {formatted_key}: {value}")
+        # Employee details (for Employee Detail page)
+        employee = context.get("employee")
+        if employee and isinstance(employee, dict):
+            parts.append("")
+            parts.append("Employee Details:")
+            for key, value in employee.items():
+                if value is not None:
+                    parts.append(f"  {key}: {value}")
+        
+        # Performance data (for Employee Detail page)
+        performance = context.get("performance")
+        if performance and isinstance(performance, dict):
+            parts.append("")
+            parts.append("Performance Data:")
+            if performance.get("score"):
+                parts.append(f"  Performance Score: {performance['score']}")
+            if performance.get("moraleScore"):
+                parts.append(f"  Morale Score: {performance['moraleScore']} (out of 100, below 60 is concerning)")
+            if performance.get("churnRisk"):
+                parts.append(f"  Churn Risk (likelihood of leaving): {performance['churnRisk']}")
+            if performance.get("slackSentiment"):
+                parts.append(f"  Slack Sentiment: {performance['slackSentiment']} (0-1 scale, below 0.5 is negative)")
+        
+        # Thomas Assessments (for Employee Detail page - actual scores, not predictions)
+        thomas = context.get("thomasAssessments")
+        if thomas and isinstance(thomas, dict):
+            parts.append("")
+            parts.append("Thomas Assessments (actual scores):")
+            ppa = thomas.get("ppa")
+            if ppa and isinstance(ppa, dict):
+                parts.append(f"  PPA: D={ppa.get('dominance')}, I={ppa.get('influence')}, S={ppa.get('steadiness')}, C={ppa.get('compliance')}")
+            if thomas.get("gia"):
+                parts.append(f"  GIA: {thomas['gia']}")
+            hpti = thomas.get("hpti")
+            if hpti and isinstance(hpti, dict):
+                parts.append(f"  HPTI: Conscientiousness={hpti.get('conscientiousness')}, Adjustment={hpti.get('adjustment')}, Curiosity={hpti.get('curiosity')}, Risk={hpti.get('riskApproach')}, Ambiguity={hpti.get('ambiguityAcceptance')}, Competitiveness={hpti.get('competitiveness')}")
+        
+        # Leadership data
+        if context.get("leadershipReadiness"):
+            parts.append(f"Leadership Readiness: {context['leadershipReadiness']}")
+        if context.get("recommendedNextRole"):
+            parts.append(f"Recommended Next Role: {context['recommendedNextRole']}")
+        
+        # Team collaboration
+        team = context.get("teamCollaboration")
+        if team and isinstance(team, dict):
+            parts.append("")
+            parts.append("Team Collaboration:")
+            if team.get("avgChemistryScore"):
+                parts.append(f"  Avg Chemistry Score: {team['avgChemistryScore']}")
+            if team.get("avgRelationshipScore"):
+                parts.append(f"  Avg Relationship Score: {team['avgRelationshipScore']}")
+            if team.get("interpersonalFlexibility"):
+                parts.append(f"  Interpersonal Flexibility: {team['interpersonalFlexibility']}")
+        
+        # AI Insights (for Referrals - predicted scores)
+        ai_insights = context.get("aiInsights")
+        if ai_insights and isinstance(ai_insights, dict):
+            parts.append("")
+            parts.append("AI Insights (predicted):")
+            
+            if ai_insights.get("summary"):
+                parts.append(f"  Summary: {ai_insights['summary']}")
+            
+            ppa = ai_insights.get("predictedPPA") or ai_insights.get("predicted_ppa")
+            if ppa and isinstance(ppa, dict):
+                parts.append(f"  Predicted PPA: D={ppa.get('dominance')}, I={ppa.get('influence')}, S={ppa.get('steadiness')}, C={ppa.get('compliance')}")
+            
+            hpti = ai_insights.get("predictedHPTI") or ai_insights.get("predicted_hpti")
+            if hpti and isinstance(hpti, dict):
+                parts.append(f"  Predicted HPTI: Conscientiousness={hpti.get('conscientiousness')}, Curiosity={hpti.get('curiosity')}, Ambiguity={hpti.get('ambiguity_acceptance')}")
+            
+            gia = ai_insights.get("estimatedGIA") or ai_insights.get("estimated_gia")
+            if gia and isinstance(gia, dict):
+                parts.append(f"  Estimated GIA: {gia.get('percentile')}th percentile")
+            
+            if ai_insights.get("recommendation"):
+                parts.append(f"  Recommendation: {ai_insights['recommendation']}")
     
     return "\n".join(parts)
 
@@ -923,38 +985,37 @@ async def ask_thom(request: AskThomRequest):
     """
     Ask Thom, the AI assistant powered by Thomas International insights and Databricks Gemini.
     
-    Accepts universal page context as a dict - AskThom will parse whatever keys exist.
+    Following Constantine template: Static prompt (Sections 1-3, 5) is preloaded,
+    Dynamic context (Section 4) is built from the request and injected per-call.
     """
     import logging
+    import os
     logger = logging.getLogger(__name__)
     
     # Log incoming context for debugging
-    logger.info(f"AskThom received context: {request.context}")
+    logger.info(f"AskThom received context keys: {list(request.context.keys()) if request.context else 'none'}")
     logger.info(f"AskThom page_context: {request.page_context}")
     
-    # Build context from the universal page context
-    context_str = build_context_prompt(request.context, request.page_context)
+    # Build SECTION 4: DYNAMIC CONTEXT from the request
+    dynamic_context = build_context_prompt(request.context, request.page_context)
     
-    logger.info(f"Built context prompt (first 500 chars): {context_str[:500] if context_str else 'empty'}")
+    logger.info(f"Built dynamic context (first 500 chars): {dynamic_context[:500] if dynamic_context else 'empty'}")
     
-    # Add instruction for concise responses
-    if context_str:
-        context_str = f"""CURRENT CONTEXT:
-{context_str}
-
-IMPORTANT: If the user asks about "them", "this person", "her/him", or uses a first name, they are referring to the person mentioned in the context above.
-
-RESPONSE STYLE: Be concise and direct. Use bullet points. Only elaborate if asked."""
-    else:
-        context_str = "RESPONSE STYLE: Be concise and direct. Use bullet points. Only elaborate if asked."
-    
-    # Call Databricks AI service (with fallback)
+    # Call Databricks AI service
+    # The service will combine static prompt (Sections 1-3, 5) with dynamic context (Section 4)
     ai_service = get_ai_service()
+    used_fallback = False
+    auth_mode = "oauth" if os.getenv("DATABRICKS_CLIENT_ID") else "pat" if os.getenv("DATABRICKS_TOKEN") else "none"
+    
     if ai_service:
-        answer = ai_service.ask_thom(request.question, context_str)
+        answer = ai_service.ask_thom(request.question, dynamic_context)
+        # Check if it returned a fallback response
+        if "offline mode" in answer.lower() or "I'm Thom, your People Science advisor" in answer:
+            used_fallback = True
     else:
         # Fallback response when AI service is unavailable
         answer = generate_fallback_response(request.question)
+        used_fallback = True
     
     # Apply keyword highlighting
     highlighting = highlight_keywords(answer)
@@ -984,7 +1045,13 @@ RESPONSE STYLE: Be concise and direct. Use bullet points. Only elaborate if aske
         highlighted_answer=highlighting["highlighted_text"],
         thomas_keywords_found=highlighting["thomas_keywords"],
         ifs_keywords_found=highlighting["ifs_keywords"],
-        sources=sources
+        sources=sources,
+        debug_info={
+            "used_fallback": used_fallback,
+            "auth_mode": auth_mode,
+            "model_endpoint": os.getenv("DATABRICKS_MODEL_ENDPOINT", "databricks-gemini-2-5-flash"),
+            "host": os.getenv("DATABRICKS_HOST", "not set")[:50],
+        }
     )
 
 
@@ -1043,12 +1110,33 @@ What specific aspect would you like to explore?"""
 @router.get("/thom-status")
 async def get_thom_status():
     """Check Thom AI service status and warmup state"""
+    import os
     ai_service = get_ai_service()
+    
+    # Auth diagnostics
+    has_oauth = bool(os.getenv("DATABRICKS_CLIENT_ID"))
+    has_pat = bool(os.getenv("DATABRICKS_TOKEN"))
+    
+    # Test workspace client
+    workspace_client_status = "unknown"
+    if ai_service:
+        try:
+            client = ai_service._get_workspace_client()
+            if client:
+                workspace_client_status = "connected"
+            else:
+                workspace_client_status = "failed"
+        except Exception as e:
+            workspace_client_status = f"error: {str(e)[:100]}"
+    
     return {
         "status": "online" if ai_service else "fallback",
-        "model": "databricks-gemini-2-5-flash",
+        "model": os.getenv("DATABRICKS_MODEL_ENDPOINT", "databricks-gemini-2-5-flash"),
         "sql_warehouse": "thomas-talenthub-dwh",
         "warmed_up": ai_service._warmed_up if ai_service else False,
+        "auth_mode": "oauth" if has_oauth else ("pat" if has_pat else "none"),
+        "workspace_client": workspace_client_status,
+        "host": os.getenv("DATABRICKS_HOST", "not set"),
         "features": [
             "Thomas International psychometric insights",
             "IFS Cloud integration knowledge",

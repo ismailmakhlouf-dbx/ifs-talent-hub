@@ -6,17 +6,10 @@ Integrates SQL Warehouse AI Functions and Model Serving Endpoints
 import os
 import json
 import logging
-import time
 from typing import Dict, Any, List, Optional
-from dataclasses import dataclass, field
-from threading import Lock, RLock
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
-
-# Constants for connection management
-CONNECTION_TIMEOUT_SECONDS = 30
-CONNECTION_MAX_AGE_SECONDS = 300  # Refresh connection every 5 minutes
-MAX_RETRIES = 2
 
 # Connection details
 DATABRICKS_HOST = "fevm-ismailmakhlouf-demo-ws.cloud.databricks.com"
@@ -139,24 +132,13 @@ This is the IFS Talent Hub, an internal talent management application for IFS em
 - IFS Cloud Integration (HR/ERP data)
 """
 
-FULL_THOM_CONTEXT = f"""You are Thom, an AI People Science coach for the IFS Talent Hub, powered by Thomas International psychometrics.
+FULL_THOM_CONTEXT = """You are Thom, a talent advisor for IFS. You help with candidate assessments and team dynamics using Thomas International psychometric data (PPA, GIA, HPTI).
 
-{THOMAS_CONTEXT}
-
-{IFS_CONTEXT}
-
-{APPLICATION_CONTEXT}
-
-### Response Style:
-- **BE CONCISE**: Use bullet points, short paragraphs. No fluff.
-- **BE SPECIFIC**: Reference actual data, scores, and metrics when available.
-- **BE ACTIONABLE**: Give clear recommendations, not just explanations.
-- Only elaborate in detail if the user explicitly asks to.
-
-### When referring to products:
-- Thomas products: PPA, GIA, HPTI, TEIQue, Thomas Engage, Thomas Connect
-- IFS products: IFS Cloud, ERP, EAM, FSM, Industrial AI
-"""
+Rules:
+- Use the context provided to answer questions
+- Be helpful and concise
+- Never re-introduce yourself (don't say "Thom here" or "Hi, I'm Thom")
+- Always complete your response fully - don't stop mid-sentence"""
 
 
 @dataclass
@@ -167,16 +149,20 @@ class DatabricksAIService:
     http_path: str = SQL_WAREHOUSE_HTTP_PATH
     model_endpoint: str = MODEL_ENDPOINT
     token: Optional[str] = None
-    _connection: Any = field(default=None, repr=False)
+    _connection = None
     _warmed_up: bool = False
-    _workspace_client: Any = field(default=None, repr=False)
-    _connection_created_at: float = field(default=0.0, repr=False)
-    _workspace_client_created_at: float = field(default=0.0, repr=False)
-    _lock: Lock = field(default_factory=Lock, repr=False)
+    _workspace_client = None
     
     def __post_init__(self):
-        # Get token from environment or use app service principal
-        self.token = os.getenv("DATABRICKS_TOKEN", "")
+        # Check for Databricks Apps OAuth vs PAT
+        has_oauth = bool(os.getenv("DATABRICKS_CLIENT_ID")) and bool(os.getenv("DATABRICKS_CLIENT_SECRET"))
+        if has_oauth:
+            self.token = None  # Use OAuth, not PAT
+            logger.info("Databricks OAuth detected - using managed identity")
+        else:
+            self.token = os.getenv("DATABRICKS_TOKEN", "") or None
+            if self.token:
+                logger.info("Using PAT authentication")
         
         # Override host if set in environment
         env_host = os.getenv("DATABRICKS_HOST", "")
@@ -195,88 +181,68 @@ class DatabricksAIService:
         
         logger.info(f"DatabricksAIService initialized: host={self.host}, model={self.model_endpoint}")
     
-    def _get_workspace_client(self, force_refresh: bool = False):
-        """Get or create WorkspaceClient with proper authentication and connection recovery"""
-        with self._lock:
-            # Check if we need to refresh the client (stale connection)
-            client_age = time.time() - self._workspace_client_created_at
-            if self._workspace_client is not None and client_age > CONNECTION_MAX_AGE_SECONDS:
-                logger.info(f"WorkspaceClient is {client_age:.0f}s old, refreshing...")
-                self._workspace_client = None
-            
-            if force_refresh:
-                logger.info("Force refreshing WorkspaceClient")
-                self._workspace_client = None
-            
-            if self._workspace_client is None:
-                try:
-                    from databricks.sdk import WorkspaceClient
-                    
-                    host_url = f"https://{self.host}" if not self.host.startswith("http") else self.host
-                    
-                    # When running as Databricks App, use default auth (service principal)
-                    if self.token:
-                        logger.info(f"Creating WorkspaceClient with token for {host_url}")
-                        self._workspace_client = WorkspaceClient(
-                            host=host_url,
-                            token=self.token
-                        )
-                    else:
-                        # Use default authentication (works with Databricks Apps service principal)
-                        logger.info(f"Creating WorkspaceClient with default auth for {host_url}")
-                        self._workspace_client = WorkspaceClient(host=host_url)
-                    
-                    self._workspace_client_created_at = time.time()
-                    
-                    # Test the connection by listing endpoints (lightweight call)
+    def _get_workspace_client(self):
+        """Get or create WorkspaceClient with proper authentication"""
+        if self._workspace_client is None:
+            try:
+                from databricks.sdk import WorkspaceClient
+                
+                client_id = os.getenv("DATABRICKS_CLIENT_ID")
+                is_databricks_app = bool(client_id)
+                
+                if is_databricks_app:
+                    # Databricks Apps: Remove PAT from env to avoid auth conflict, use OAuth
+                    saved_token = os.environ.pop("DATABRICKS_TOKEN", None)
                     try:
-                        endpoints = list(self._workspace_client.serving_endpoints.list())
-                        logger.info(f"WorkspaceClient initialized successfully, found {len(endpoints)} serving endpoints")
-                    except Exception as test_err:
-                        logger.warning(f"WorkspaceClient created but test failed: {test_err}")
-                        
-                except Exception as e:
-                    logger.error(f"Failed to create WorkspaceClient: {e}")
-                    import traceback
-                    logger.error(traceback.format_exc())
-                    return None
-            return self._workspace_client
+                        self._workspace_client = WorkspaceClient()  # Auto-discovers OAuth
+                        logger.info("WorkspaceClient created with OAuth (managed identity)")
+                    finally:
+                        if saved_token:
+                            os.environ["DATABRICKS_TOKEN"] = saved_token
+                elif self.token:
+                    # Local dev with PAT
+                    host_url = f"https://{self.host}" if not self.host.startswith("http") else self.host
+                    self._workspace_client = WorkspaceClient(host=host_url, token=self.token)
+                    logger.info("WorkspaceClient created with PAT")
+                else:
+                    # Fallback
+                    host_url = f"https://{self.host}" if not self.host.startswith("http") else self.host
+                    self._workspace_client = WorkspaceClient(host=host_url)
+                    logger.info("WorkspaceClient created with default auth")
+                    
+            except Exception as e:
+                logger.error(f"Failed to create WorkspaceClient: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+                return None
+        return self._workspace_client
     
-    def get_connection(self, force_refresh: bool = False):
-        """Get or create SQL connection with connection recovery"""
-        with self._lock:
-            # Check if connection is stale
-            conn_age = time.time() - self._connection_created_at
-            if self._connection is not None and conn_age > CONNECTION_MAX_AGE_SECONDS:
-                logger.info(f"SQL connection is {conn_age:.0f}s old, refreshing...")
-                try:
-                    self._connection.close()
-                except:
-                    pass
-                self._connection = None
+    def get_connection(self):
+        """Get or create SQL connection - disabled in Databricks Apps (uses browser OAuth)"""
+        # SQL connector in Databricks Apps tries browser-based OAuth which won't work
+        # For now, return None and let callers use fallback
+        if self._connection is None:
+            # Skip SQL in Databricks Apps environment
+            if os.getenv("DATABRICKS_CLIENT_ID"):
+                logger.info("SQL connection skipped in Databricks Apps (not supported)")
+                return None
             
-            if force_refresh and self._connection is not None:
-                logger.info("Force refreshing SQL connection")
-                try:
-                    self._connection.close()
-                except:
-                    pass
-                self._connection = None
-            
-            if self._connection is None:
-                try:
-                    from databricks import sql
-                    self._connection = sql.connect(
-                        server_hostname=self.host,
-                        http_path=self.http_path,
-                        access_token=self.token,
-                    )
-                    self._connection_created_at = time.time()
-                    logger.info("Connected to Databricks SQL Warehouse")
-                except Exception as e:
-                    logger.warning(f"Could not connect to SQL Warehouse: {e}")
-                    return None
-            return self._connection
+            if not self.token:
+                logger.info("No token available for SQL connection")
+                return None
+                
+            try:
+                from databricks import sql
+                self._connection = sql.connect(
+                    server_hostname=self.host,
+                    http_path=self.http_path,
+                    access_token=self.token,
+                )
+                logger.info("Connected to Databricks SQL Warehouse")
+            except Exception as e:
+                logger.warning(f"Could not connect to SQL Warehouse: {e}")
+                return None
+        return self._connection
     
     def warmup(self) -> bool:
         """Warm up the SQL warehouse with a simple query"""
@@ -295,103 +261,94 @@ class DatabricksAIService:
         return False
     
     def extract_cv_insights_sql(self, cv_text: str, candidate_name: str) -> Optional[Dict[str, Any]]:
-        """Extract CV insights using Model Serving endpoint (faster than SQL AI functions)"""
+        """Extract CV insights - returns None in Databricks Apps to use mock data"""
+        # In Databricks Apps, SQL AI functions aren't available via OAuth
+        # Return None to trigger fallback to mock data
+        conn = self.get_connection()
+        if not conn:
+            logger.info(f"CV extraction skipped for {candidate_name} - no SQL connection")
+            return None
+        
         try:
-            from databricks.sdk.service.serving import ChatMessage, ChatMessageRole
-            
-            w = self._get_workspace_client()
-            if not w:
-                logger.warning("No workspace client for CV extraction")
-                return None
-            
-            prompt = f"""Extract professional insights from this CV for {candidate_name}. 
-Return a JSON object with these exact keys:
-- skills: array of technical skills
-- years_experience: number
-- education: array of objects with degree, field, institution
-- certifications: array of certification names
-- languages: array of languages
-- summary: 2-3 sentence professional summary
-
-CV Content:
-{cv_text[:4000]}
-
-Return ONLY valid JSON, no markdown or explanation."""
-
-            logger.info(f"Extracting CV insights for {candidate_name} via model serving")
-            
-            messages = [
-                ChatMessage(role=ChatMessageRole.USER, content=prompt)
-            ]
-            
-            response = w.serving_endpoints.query(
-                name=self.model_endpoint,
-                messages=messages,
-                max_tokens=800,
-            )
-            
-            result_text = response.choices[0].message.content
-            logger.info(f"CV extraction response received: {len(result_text)} chars")
-            
-            # Try to parse JSON from the response
-            # Sometimes models wrap JSON in markdown code blocks
-            import re
-            json_match = re.search(r'\{[\s\S]*\}', result_text)
-            if json_match:
-                return json.loads(json_match.group())
-            
-            return json.loads(result_text)
-            
+            cursor = conn.cursor()
+            query = f"""
+            SELECT AI_QUERY(
+                '{self.model_endpoint}',
+                'Extract professional insights from this CV for {candidate_name}. 
+                Return a JSON object with: skills (array), years_experience (number), 
+                education (array), certifications (array), summary (2-3 sentences).
+                CV Content: {cv_text[:2000]}
+                Return ONLY valid JSON.'
+            ) as insights
+            """
+            cursor.execute(query)
+            result = cursor.fetchone()
+            cursor.close()
+            if result and result[0]:
+                import json
+                return json.loads(result[0])
         except Exception as e:
             logger.warning(f"SQL CV extraction failed: {e}")
         
         return None
-    
+
     def ask_thom(self, question: str, context: Optional[str] = None) -> str:
-        """Ask Thom a question using the model serving endpoint with retry logic"""
-        last_error = None
+        """Ask Thom a question using the model serving endpoint"""
+        import time
+        MAX_RETRIES = 2
         
         for attempt in range(MAX_RETRIES + 1):
             try:
-                from databricks.sdk.service.serving import ChatMessage, ChatMessageRole
+                logger.info(f"=== ASK THOM ATTEMPT {attempt + 1}/{MAX_RETRIES + 1} ===")
+                logger.info(f"Question: {question[:100]}...")
+                logger.info(f"Context length: {len(context) if context else 0} chars")
                 
-                # Force refresh client on retry
-                w = self._get_workspace_client(force_refresh=(attempt > 0))
+                # Force refresh workspace client on retry
+                if attempt > 0:
+                    self._workspace_client = None
+                
+                w = self._get_workspace_client()
                 if not w:
-                    logger.warning("No workspace client available, using fallback")
+                    logger.error("No workspace client available!")
+                    if attempt < MAX_RETRIES:
+                        time.sleep(1)
+                        continue
                     return self._fallback_response(question, context)
                 
                 system_prompt = FULL_THOM_CONTEXT
                 if context:
                     system_prompt += f"\n\n### Current Context:\n{context}"
                 
-                logger.info(f"Calling model endpoint: {self.model_endpoint} (attempt {attempt + 1}/{MAX_RETRIES + 1})")
+                logger.info(f"Calling model endpoint: {self.model_endpoint}")
+                logger.info(f"System prompt length: {len(system_prompt)} chars")
                 
-                # Use ChatMessage objects instead of plain dicts
-                messages = [
-                    ChatMessage(role=ChatMessageRole.SYSTEM, content=system_prompt),
-                    ChatMessage(role=ChatMessageRole.USER, content=question)
-                ]
+                from databricks.sdk.service.serving import ChatMessage, ChatMessageRole
                 
                 response = w.serving_endpoints.query(
                     name=self.model_endpoint,
-                    messages=messages,
-                    max_tokens=1000,
+                    messages=[
+                        ChatMessage(role=ChatMessageRole.SYSTEM, content=system_prompt),
+                        ChatMessage(role=ChatMessageRole.USER, content=question)
+                    ],
+                    max_tokens=2000,
                 )
                 
-                logger.info("Model serving call successful")
-                return response.choices[0].message.content
+                answer = response.choices[0].message.content
+                logger.info(f"=== MODEL SUCCESS === Response: {len(answer)} chars")
+                logger.info(f"Preview: {answer[:200]}...")
+                return answer
                 
             except Exception as e:
-                last_error = e
-                logger.warning(f"Model serving attempt {attempt + 1} failed: {e}")
+                logger.error(f"=== MODEL ERROR (attempt {attempt + 1}) ===")
+                logger.error(f"Error: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+                
                 if attempt < MAX_RETRIES:
-                    time.sleep(1)  # Brief pause before retry
+                    time.sleep(1)
                     continue
-        
-        logger.error(f"All {MAX_RETRIES + 1} attempts failed, using fallback")
-        import traceback
-        logger.error(traceback.format_exc())
+                    
+        logger.error("All attempts failed, using fallback")
         return self._fallback_response(question, context)
     
     def _fallback_response(self, question: str, context: Optional[str] = None) -> str:
@@ -483,26 +440,14 @@ def get_thom_context() -> str:
 
 
 def get_thomas_keywords() -> List[str]:
-    """Get list of Thomas product keywords for highlighting.
-    Only includes actual product names, not common words that could match verbs/nouns.
-    """
+    """Get list of Thomas product keywords for highlighting"""
     return [
-        # Core Product Names (case-sensitive matching recommended)
-        "PPA", "Personal Profile Analysis",
+        "PPA", "Personal Profile Analysis", "DISC",
         "GIA", "General Intelligence Assessment", 
         "HPTI", "High Potential Trait Indicator",
         "TEIQue", "Trait Emotional Intelligence",
-        "Thomas Engage",  # Full name to avoid matching verb "engage"
-        "Thomas Connect", "Thomas Insights",
+        "Engage", "Thomas Connect", "Thomas Insights",
         "Chemistry Score", "Interpersonal Flexibility",
-        # DISC traits - these are specific enough
-        "DISC",
-    ]
-
-
-def get_thomas_trait_keywords() -> List[str]:
-    """Get Thomas trait keywords that should match case-sensitively only when capitalized"""
-    return [
         "Dominance", "Influence", "Steadiness", "Compliance",
         "Conscientiousness", "Adjustment", "Curiosity", 
         "Risk Approach", "Ambiguity Acceptance", "Competitiveness"

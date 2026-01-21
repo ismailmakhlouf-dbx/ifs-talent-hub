@@ -396,7 +396,7 @@ class LLMService:
             "levers": levers,
             "emphasize": emphasize,
             "avoid": avoid,
-            "approach": f"Given their profile (High {'Steadiness' if steadiness > dominance else 'Dominance'}), approach the negotiation with {'patience and reassurance' if steadiness > dominance else 'directness and confidence'}. The proposed TC of ${tc:,} is {'competitive' if tc >= mid_point else 'below market mid-point'}."
+            "approach": f"Given their profile (High {'Steadiness' if steadiness > dominance else 'Dominance'}), approach the negotiation with {'patience and reassurance' if steadiness > dominance else 'directness and confidence'}. The proposed TC is {'competitive' if tc >= mid_point else 'below market mid-point'}."
         }
     
     def _mock_profile_match(self, candidate: Dict, ideal: Dict) -> Dict[str, Any]:
