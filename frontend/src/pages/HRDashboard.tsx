@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -15,8 +15,7 @@ import {
   PieChart as PieChartIcon,
   Activity,
   Sparkles,
-  CheckCircle2,
-  ArrowRight
+  CheckCircle2
 } from 'lucide-react'
 import { 
   BarChart, 
@@ -34,7 +33,90 @@ import {
   Area
 } from 'recharts'
 import { usePageContext } from '../contexts/PageContext'
+import { AskThomChat } from '../components/AskThom'
 import clsx from 'clsx'
+
+// Time-based data configuration
+type TimeRange = 'Last 7 Days' | 'Last 30 Days' | 'Last 90 Days' | 'Year to Date'
+
+interface TimeBasedMetrics {
+  headcount: string
+  headcountChange: string
+  headcountSubtext: string
+  turnover: string
+  turnoverChange: string
+  timeToHire: string
+  timeToHireChange: string
+  costPerHire: string
+  costPerHireChange: string
+  retentionCurrent: string
+  retentionImprovement: string
+  interventionsTriggered: number
+  hiringFunnelMultiplier: number
+}
+
+const TIME_BASED_METRICS: Record<TimeRange, TimeBasedMetrics> = {
+  'Last 7 Days': {
+    headcount: '2,847',
+    headcountChange: '+0.3%',
+    headcountSubtext: '+8 this week',
+    turnover: '0.2%',
+    turnoverChange: '-89%',
+    timeToHire: '16 days',
+    timeToHireChange: '-48%',
+    costPerHire: '£3,900',
+    costPerHireChange: '-33%',
+    retentionCurrent: '99.8%',
+    retentionImprovement: '+0.2pp vs last week',
+    interventionsTriggered: 12,
+    hiringFunnelMultiplier: 0.05
+  },
+  'Last 30 Days': {
+    headcount: '2,847',
+    headcountChange: '+4.2%',
+    headcountSubtext: '↑ 115 YoY growth',
+    turnover: '8.2%',
+    turnoverChange: '-34%',
+    timeToHire: '18 days',
+    timeToHireChange: '-42%',
+    costPerHire: '£4,200',
+    costPerHireChange: '-28%',
+    retentionCurrent: '92%',
+    retentionImprovement: '+10pp vs 6 months ago',
+    interventionsTriggered: 106,
+    hiringFunnelMultiplier: 1
+  },
+  'Last 90 Days': {
+    headcount: '2,847',
+    headcountChange: '+8.1%',
+    headcountSubtext: '↑ 212 Q/Q growth',
+    turnover: '7.8%',
+    turnoverChange: '-37%',
+    timeToHire: '19 days',
+    timeToHireChange: '-39%',
+    costPerHire: '£4,500',
+    costPerHireChange: '-22%',
+    retentionCurrent: '91%',
+    retentionImprovement: '+9pp vs prev quarter',
+    interventionsTriggered: 287,
+    hiringFunnelMultiplier: 3
+  },
+  'Year to Date': {
+    headcount: '2,847',
+    headcountChange: '+12.4%',
+    headcountSubtext: '↑ 315 YTD growth',
+    turnover: '8.2%',
+    turnoverChange: '-34%',
+    timeToHire: '20 days',
+    timeToHireChange: '-35%',
+    costPerHire: '£4,800',
+    costPerHireChange: '-17%',
+    retentionCurrent: '89%',
+    retentionImprovement: '+7pp vs prev year',
+    interventionsTriggered: 892,
+    hiringFunnelMultiplier: 12
+  }
+}
 
 // Real HR metrics data
 const retentionTrend = [
@@ -87,22 +169,35 @@ const monthlyHires = [
   { month: 'Dec', hires: 8, terminations: 4 },
 ]
 
-const TIME_RANGES = ['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Year to Date']
+const TIME_RANGES: TimeRange[] = ['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Year to Date']
 
 export default function HRDashboard() {
   const { setPageContext } = usePageContext()
-  const [selectedRange, setSelectedRange] = useState('Last 30 Days')
+  const [selectedRange, setSelectedRange] = useState<TimeRange>('Last 30 Days')
+  const [showAskThom, setShowAskThom] = useState(false)
+  
+  // Get metrics for selected time range
+  const metrics = TIME_BASED_METRICS[selectedRange]
+  
+  // Calculate hiring funnel data based on time range
+  const scaledHiringFunnel = useMemo(() => {
+    return hiringFunnel.map(stage => ({
+      ...stage,
+      count: Math.round(stage.count * metrics.hiringFunnelMultiplier)
+    }))
+  }, [metrics.hiringFunnelMultiplier])
 
   useEffect(() => {
     setPageContext({
       pageName: 'HR Executive Dashboard',
-      pageDescription: 'Workforce analytics and Thomas International impact metrics for IFS',
+      pageDescription: 'Workforce analytics and Thomas International impact metrics for IFS Cloud',
       totalEmployees: 2847,
       activeRoles: 23,
       churnRiskEmployees: 285,
-      thomasAssessmentCoverage: '94%'
+      thomasAssessmentCoverage: '94%',
+      selectedTimeRange: selectedRange
     })
-  }, [setPageContext])
+  }, [setPageContext, selectedRange])
 
   return (
     <div className="min-h-screen bg-[#F8F9FC] p-8">
@@ -116,7 +211,7 @@ export default function HRDashboard() {
               </div>
               <h1 className="text-2xl font-display font-bold text-thomas-slate">HR Executive Dashboard</h1>
             </div>
-            <p className="text-slate-500 text-sm">Thomas International + GenAI Workforce Impact for IFS</p>
+            <p className="text-slate-500 text-sm">Thomas International + GenAI Workforce Impact for IFS Cloud</p>
           </div>
           
           {/* Time Range Selector */}
@@ -147,11 +242,29 @@ export default function HRDashboard() {
               <p className="text-xs text-purple-500">Real-time analytics with Mosaic AI and psychometric insights</p>
             </div>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-purple-100 hover:bg-purple-200 border border-purple-300 rounded-lg text-purple-700 text-sm transition-colors">
+          <button 
+            onClick={() => setShowAskThom(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-100 hover:bg-purple-200 border border-purple-300 rounded-lg text-purple-700 text-sm transition-colors"
+          >
             <Sparkles className="w-4 h-4" />
             Ask Thom
           </button>
         </div>
+
+        {/* AskThom Modal */}
+        {showAskThom && (
+          <AskThomChat 
+            context="hr-executive-dashboard"
+            contextData={{
+              pageName: 'HR Executive Dashboard',
+              selectedTimeRange: selectedRange,
+              totalHeadcount: 2847,
+              turnoverRate: metrics.turnover,
+              retentionRate: metrics.retentionCurrent
+            }}
+            onClose={() => setShowAskThom(false)}
+          />
+        )}
 
         {/* Primary KPI Cards */}
         <div className="grid grid-cols-4 gap-4 mb-6">
@@ -159,18 +272,18 @@ export default function HRDashboard() {
             icon={<Users className="w-5 h-5" />}
             iconColor="text-cyan-600"
             iconBg="bg-cyan-100"
-            value="2,847"
-            change="+4.2%"
+            value={metrics.headcount}
+            change={metrics.headcountChange}
             positive={true}
             label="Total Headcount"
-            subtext="↑ 115 YoY growth"
+            subtext={metrics.headcountSubtext}
           />
           <KPICard 
             icon={<TrendingDown className="w-5 h-5" />}
             iconColor="text-green-600"
             iconBg="bg-green-100"
-            value="8.2%"
-            change="-34%"
+            value={metrics.turnover}
+            change={metrics.turnoverChange}
             positive={true}
             label="Annual Turnover"
             subtext="vs 12.4% industry avg"
@@ -179,8 +292,8 @@ export default function HRDashboard() {
             icon={<Clock className="w-5 h-5" />}
             iconColor="text-orange-600"
             iconBg="bg-orange-100"
-            value="18 days"
-            change="-42%"
+            value={metrics.timeToHire}
+            change={metrics.timeToHireChange}
             positive={true}
             label="Time to Hire"
             subtext="Thomas AI screening"
@@ -189,8 +302,8 @@ export default function HRDashboard() {
             icon={<DollarSign className="w-5 h-5" />}
             iconColor="text-pink-600"
             iconBg="bg-pink-100"
-            value="£4,200"
-            change="-28%"
+            value={metrics.costPerHire}
+            change={metrics.costPerHireChange}
             positive={true}
             label="Cost per Hire"
             subtext="down from £5,800"
@@ -208,7 +321,7 @@ export default function HRDashboard() {
             <p className="text-xs text-slate-500 mb-4">Candidate journey with Thomas screening</p>
             
             <div className="space-y-3">
-              {hiringFunnel.map((stage, i) => (
+              {scaledHiringFunnel.map((stage, i) => (
                 <div key={i}>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-slate-600">{stage.stage}</span>
@@ -285,12 +398,12 @@ export default function HRDashboard() {
             <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-100">
               <div className="bg-green-50 rounded-lg p-3 border border-green-200">
                 <p className="text-xs text-green-600 mb-1">Current Retention</p>
-                <p className="text-xl font-bold text-green-700">92%</p>
-                <p className="text-[10px] text-green-500">+10pp vs 6 months ago</p>
+                <p className="text-xl font-bold text-green-700">{metrics.retentionCurrent}</p>
+                <p className="text-[10px] text-green-500">{metrics.retentionImprovement}</p>
               </div>
               <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
                 <p className="text-xs text-orange-600 mb-1">Interventions Triggered</p>
-                <p className="text-xl font-bold text-orange-700">106</p>
+                <p className="text-xl font-bold text-orange-700">{metrics.interventionsTriggered}</p>
                 <p className="text-[10px] text-orange-500">73% success rate</p>
               </div>
             </div>
@@ -513,12 +626,8 @@ export default function HRDashboard() {
 
         {/* ROI Summary */}
         <div className="bg-gradient-to-r from-thomas-orange to-thomas-pink rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6">
             <h3 className="font-semibold text-lg text-white">Thomas + Databricks AI ROI Summary</h3>
-            <button className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm transition-colors">
-              Export Report
-              <ArrowRight className="w-4 h-4" />
-            </button>
           </div>
           
           <div className="grid grid-cols-4 gap-6">
