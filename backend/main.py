@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend.routers import recruitment, performance, analytics, ai_insights, system
-from config import is_local_mode
+from config import is_local_mode, is_databricks_app
 
 # Check if we have a built frontend
 STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
@@ -34,8 +34,19 @@ HAS_STATIC = os.path.exists(STATIC_DIR) and os.path.exists(os.path.join(STATIC_D
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events"""
-    print("🚀 Starting IFS Talent Hub API (Powered by Thomas International)")
-    print(f"   Mode: {'Local (Mock Data)' if is_local_mode() else 'Databricks Connected'}")
+    # Determine runtime mode
+    if is_databricks_app():
+        mode_str = "🚀 STARTING IN PRODUCTION MODE (Managed Identity)"
+        app_name = os.getenv("DATABRICKS_APP_NAME", "unknown")
+        print(mode_str)
+        print(f"   App Name: {app_name}")
+    elif is_local_mode():
+        print("🚀 Starting IFS Talent Hub API (Powered by Thomas International)")
+        print("   Mode: Local (Mock Data)")
+    else:
+        print("🚀 Starting IFS Talent Hub API (Powered by Thomas International)")
+        print("   Mode: Databricks Connected (Token Auth)")
+    
     print(f"   Static Files: {'Enabled' if HAS_STATIC else 'Disabled (development mode)'}")
     
     # Warm up Databricks SQL Warehouse

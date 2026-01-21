@@ -49,19 +49,38 @@ class DatabricksConfig:
         return bool(self.host and self.token and self.warehouse_id)
 
 
+def is_databricks_app() -> bool:
+    """Check if running as a Databricks App (using managed identity)"""
+    # Databricks Apps automatically set these environment variables
+    return bool(os.getenv("DATABRICKS_APP_NAME") or os.getenv("DATABRICKS_APP_ID"))
+
+
 def get_app_mode() -> str:
     """Get current app mode (local or databricks)"""
-    # Check RUN_MODE first (matches oe-smart-tariff), then APP_MODE for backwards compatibility
+    # PRIORITY 1: Check if running in Databricks Apps environment
+    if is_databricks_app():
+        return "databricks"
+    
+    # PRIORITY 2: Check explicit RUN_MODE or APP_MODE environment variables
     run_mode = os.getenv("RUN_MODE", "")
     if run_mode:
         return run_mode
-    return os.getenv("APP_MODE", "local")
+    
+    app_mode = os.getenv("APP_MODE", "")
+    if app_mode:
+        return app_mode
+    
+    # Default to local mode for development
+    return "local"
 
 
 def is_local_mode() -> bool:
     """Check if running in local mode with mock data"""
+    # NOT local mode if we're in Databricks Apps
+    if is_databricks_app():
+        return False
+    
     mode = get_app_mode()
-    # "databricks" mode means we're in the cloud
     return mode == "local"
 
 
