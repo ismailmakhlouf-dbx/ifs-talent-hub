@@ -4,7 +4,7 @@
 
 A unified talent management application integrating Thomas International psychometric assessments with Databricks AI capabilities for data-driven recruitment and performance management.
 
-![Thomas Unified Talent Hub](docs/screenshot.png)
+
 
 ---
 
