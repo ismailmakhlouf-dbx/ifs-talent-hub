@@ -1097,7 +1097,7 @@ High chemistry (75%+) suggests natural collaboration. The **Interpersonal Flexib
 The Talent Hub integrates with IFS Cloud to correlate Thomas assessments with business outcomes for better hiring decisions."""
 
     else:
-        return """I'm Thom, your AI assistant for the IFS Talent Hub. I can help you with:
+        return """I'm Thom, your AI assistant for the Thomas Unified Talent Hub. I can help you with:
 
 • Interpreting Thomas assessments (PPA, GIA, HPTI)
 • Understanding candidate fit and team chemistry

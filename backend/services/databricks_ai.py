@@ -108,10 +108,10 @@ IFS is a global enterprise cloud software company headquartered in Linköping, S
 """
 
 APPLICATION_CONTEXT = """
-## IFS Talent Hub Application - Powered by Thomas International
+## Thomas International Unified Talent Hub
 
 ### Application Purpose:
-This is the IFS Talent Hub, an internal talent management application for IFS employees and managers. It provides:
+This is the Thomas International Unified Talent Hub, a talent management application that provides:
 
 1. **Recruitment Intelligence**:
    - Open roles dashboard with hiring timelines and milestones
@@ -417,7 +417,7 @@ High chemistry (75%+) suggests natural collaboration. Lower chemistry doesn't me
 The Talent Hub integrates with IFS Cloud to pull HR data, organizational structure, and performance metrics. This enables us to correlate Thomas assessments with actual business outcomes for better hiring and development decisions."""
 
         else:
-            return f"""I'm Thom, your AI assistant for the IFS Talent Hub. I can help you with:
+            return f"""I'm Thom, your AI assistant for the Thomas Unified Talent Hub. I can help you with:
 
 • **Interpreting Thomas assessments** (PPA, GIA, HPTI) for candidates and employees
 • **Understanding team chemistry** and collaboration dynamics

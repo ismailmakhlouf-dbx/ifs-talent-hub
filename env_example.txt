@@ -1,16 +1,42 @@
-# Databricks Configuration
-# Copy this file to .env and fill in your values
+# ============================================================================
+# Thomas International Unified Talent Hub - Environment Configuration
+# ============================================================================
+# 
+# USAGE:
+#   1. Copy this file to .env in the project root
+#   2. Fill in your Databricks credentials
+#   3. This file is for LOCAL DEVELOPMENT ONLY
+#   4. In Databricks Apps, managed identity is used automatically
+#
+# ============================================================================
 
+# REQUIRED: Databricks Workspace Connection
+# ----------------------------------------------------------------------------
 DATABRICKS_HOST=https://your-workspace.cloud.databricks.com
-DATABRICKS_TOKEN=your_databricks_token
-DATABRICKS_WAREHOUSE_ID=your_sql_warehouse_id
+DATABRICKS_TOKEN=dapi_your_personal_access_token_here
+
+# OPTIONAL: SQL Warehouse (for live data queries)
+# ----------------------------------------------------------------------------
+# If not set, the app uses demo data
+DATABRICKS_WAREHOUSE_ID=abc123def456
 DATABRICKS_CATALOG=talent_management
 DATABRICKS_SCHEMA=unified_hub
 
-# GenAI Configuration (Mosaic AI)
-DATABRICKS_MODEL_ENDPOINT=databricks-meta-llama-3-1-70b-instruct
+# REQUIRED: AI Model Endpoint
+# ----------------------------------------------------------------------------
+# Foundation models (no setup required):
+#   - databricks-gemini-2-5-flash (recommended)
+#   - databricks-meta-llama-3-1-70b-instruct
+#   - databricks-claude-sonnet-4
+#   - databricks-dbrx-instruct
+DATABRICKS_MODEL_ENDPOINT=databricks-gemini-2-5-flash
+
+# OPTIONAL: Embedding Endpoint (for vector search)
+# ----------------------------------------------------------------------------
 DATABRICKS_EMBEDDING_ENDPOINT=databricks-bge-large-en
 
-# App Configuration
-APP_MODE=local  # Options: local, databricks
+# LOCAL DEV SETTINGS
+# ----------------------------------------------------------------------------
+APP_MODE=local
 DEBUG=true
+LOG_LEVEL=DEBUG

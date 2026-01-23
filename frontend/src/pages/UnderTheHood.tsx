@@ -55,7 +55,7 @@ export default function UnderTheHood() {
     setPageContext({
       pageName: 'Under the Hood',
       pageDescription: 'System architecture and live status of Databricks components',
-      systemDiagram: 'IFS Talent Hub Architecture: React Frontend → FastAPI Backend → Databricks (Model Serving + Lakebase)',
+      systemDiagram: 'Thomas Unified Talent Hub: React Frontend → FastAPI Backend → Databricks (Model Serving + Lakebase)',
       isDatabricksApp: status?.is_databricks_app || false,
       modelEndpoint: status?.model_endpoint || 'Not connected',
       sqlWarehouseStatus: status?.sql_warehouse_available ? 'Available' : 'Unavailable',
@@ -940,7 +940,7 @@ function DataModelSection() {
   }
 
   const generateSQL = () => {
-    let sql = `-- Unity Catalog Data Model for IFS Talent Hub
+    let sql = `-- Unity Catalog Data Model for Thomas Unified Talent Hub
 -- Catalog: ${dataModel.catalog}
 -- Schema: ${dataModel.schema}
 -- Generated: ${new Date().toISOString()}
@@ -1054,7 +1054,7 @@ INSERT INTO candidates (candidate_id, full_name, email, role_id, status, cv_text
   const generateJSONSchema = () => {
     return JSON.stringify({
       $schema: 'https://json-schema.org/draft/2020-12/schema',
-      title: 'IFS Talent Hub Data Model',
+      title: 'Thomas Unified Talent Hub Data Model',
       description: 'Thomas International + Databricks AI workforce analytics',
       catalog: dataModel.catalog,
       schema: dataModel.schema,

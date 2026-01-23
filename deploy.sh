@@ -1,13 +1,13 @@
 #!/bin/bash
 # ============================================================================
-# IFS Talent Hub - Automated Production Deployment Script
+# Thomas Unified Talent Hub - Automated Production Deployment Script
 # This script ensures frontend is rebuilt and synced properly
 # ============================================================================
 
 set -e  # Exit on any error
 
 echo "=============================================="
-echo "🚀 IFS Talent Hub - Production Deployment"
+echo "🚀 Thomas Unified Talent Hub - Production Deployment"
 echo "=============================================="
 
 # 1. Clean old frontend build artifacts
